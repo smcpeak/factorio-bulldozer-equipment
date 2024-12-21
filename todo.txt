@@ -1,7 +1,5 @@
-Bulldozer Module TODO
-=====================
-
-Rename the mod to use the name "equipment"?
+Bulldozer Equipment TODO
+========================
 
 Make it work with vehicles
 

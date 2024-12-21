@@ -287,11 +287,11 @@ local function read_configuration_settings()
   -- Clear any existing tick handlers.
   script.on_nth_tick(nil);
 
-  --diagnostic_verbosity                    = settings.global["bulldozer-module-diagnostic-verbosity"].value;
-  --check_period_ticks                      = settings.global["bulldozer-module-check-period-ticks"].value;
-  --refresh_landfill_blueprint_period_ticks = settings.global["bulldozer-module-refresh-landfill-blueprint-period-ticks"].value;
-  --obstacle_entity_radius                  = settings.global["bulldozer-module-obstacle-entity-radius"].value;
-  --obstacle_tile_radius                    = settings.global["bulldozer-module-obstacle-tile-radius"].value;
+  --diagnostic_verbosity                    = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
+  --check_period_ticks                      = settings.global["bulldozer-equipment-check-period-ticks"].value;
+  --refresh_landfill_blueprint_period_ticks = settings.global["bulldozer-equipment-refresh-landfill-blueprint-period-ticks"].value;
+  --obstacle_entity_radius                  = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
+  --obstacle_tile_radius                    = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
 
   -- The API uses the period as an identifier of the registered
   -- handlers, so it is awkward to register two handlers with the same

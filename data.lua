@@ -1,6 +1,6 @@
 -- data.lua
 
-local mod_name = "__BulldozerModule__";
+local mod_name = "__BulldozerEquipment__";
 
 
 -- ----------------------------- Equipment -----------------------------

@@ -1,15 +1,15 @@
 Introduction
 ============
 
-BulldozerModule is a mod for [Factorio](https://wiki.factorio.com/).  It
-adds an equipment module that automatically orders the deconstruction of
-all nearby trees, rocks, and cliffs, and orders nearby water to be
-filled with landfill.
+BulldozerEquipment is a mod for [Factorio](https://wiki.factorio.com/).
+It adds an equipment component that automatically orders the
+deconstruction of all nearby trees, rocks, and cliffs, and orders nearby
+water to be filled with landfill.
 
 The primary intended use case is to equip the lead tanks of a
 [RoboTank](https://mods.factorio.com/mod/RoboTank) formation with the
-module so that they will order a path to be cleared.  The robots that do
-the actual clearing can be carried by the player, the RoboTanks, or
+equipment so that they will order a path to be cleared.  The robots that
+do the actual clearing can be carried by the player, the RoboTanks, or
 both.  It allows the formation to roll though virtually any obstacle,
 provided it has enough resources (cliff explosives and landfill), free
 space to store the trash, and armor and armament to deal with hostiles.
