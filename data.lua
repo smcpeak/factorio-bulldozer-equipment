@@ -47,7 +47,7 @@ local bulldozer_recipe = {
   name = "bulldozer-equipment",
   type = "recipe",
 
-  enabled = true,             -- TODO: Unlock with research.
+  enabled = false,            -- Unlock with research.
   energy_required = 10,       -- 10s to craft, like other equipment.
 
   ingredients = {
@@ -90,11 +90,57 @@ local bulldozer_recipe = {
 };
 
 
+-- ---------------------------- Technology -----------------------------
+local bulldozer_technology = {
+  name = "bulldozer-equipment",
+  type = "technology",
+  effects = {
+    {
+      type = "unlock-recipe",
+      recipe = "bulldozer-equipment",
+    },
+  },
+  icon = mod_name .. "/graphics/technology/bulldozer-equipment.png",
+  icon_size = 64,
+
+  -- It seems like this is a sort of "utility" function, so perhaps it
+  -- makes sense to put it behind utility (yellow) science.
+  prerequisites = {
+    "utility-science-pack",
+    "belt-immunity-equipment",
+  },
+
+  unit = {
+    count = 50,
+    ingredients = {
+      {
+        "automation-science-pack",
+        1
+      },
+      {
+        "logistic-science-pack",
+        1
+      },
+      {
+        "chemical-science-pack",
+        1
+      },
+      {
+        "utility-science-pack",
+        1
+      },
+    },
+    time = 30,
+  },
+};
+
+
 -- ---------------------- Add the new definitions ----------------------
 data:extend{
   bulldozer_equipment,
   bulldozer_item,
   bulldozer_recipe,
+  bulldozer_technology,
 };
 
 

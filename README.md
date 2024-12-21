@@ -22,10 +22,10 @@ Usage
 =====
 
 First, research Bulldozer Equipment.  Its prerequisites are
-Processor Unit and Belt Immunity Equipment.
+Utility (yellow) Science and Belt Immunity Equipment.
 
 Create the Bulldozer Equipment item and put it into the equipment grid
-of a player character or vehicle.  Ensure the grid can supply the
+of a player character or a vehicle.  Ensure the grid can supply the
 required 200 kW of power.  This equipment also provides the function of
 the Belt Immunity equipment, so you can remove that if you have it.
 
@@ -94,7 +94,8 @@ between checks, there could be a UPS hit when approaching a shoreline.
 Related mods
 ============
 
-The "latest version" age is relative to 2024-12-21.
+The "latest version" age in the list below is relative to 2024-12-21.
+
 
 Available for Factorio 2.x
 --------------------------
@@ -104,37 +105,28 @@ Available for Factorio 2.x
 
   * Latest version: 0.2.1 (26 days ago)
 
-  * TODO: Try it.
-
 * [King Jo's Bulldozer](https://mods.factorio.com/mod/kj_bulldozer) by
-  TheKingJo: TODO
+  TheKingJo: A vehicle intended, I think, to simply ram into the trees
+  and rocks.
 
   * Latest version: 2.0.0 (30 days ago)
 
-  * TODO: Try it.
 
 Only for Factorio 1.x
 ---------------------
 
-* [Bulldozer](https://mods.factorio.com/mod/bulldozer) by ckhawks: TODO
+* [Bulldozer](https://mods.factorio.com/mod/bulldozer) by ckhawks
 
   * Latest version: 1.3.4 (7 years ago).
-
-  * TODO: Examine source code.
 
 * [Bulldozer-Fixed](https://mods.factorio.com/mod/bulldozer-fixed) by
   amwdrizz: Obsolete fork of ckhawks Bulldozer.
 
   * Latest version: 1.3.3 (8 years ago)
 
-* [Bulldozer](https://mods.factorio.com/mod/Bulldozzer) by InsanePyro:
-  TODO
+* [Bulldozer](https://mods.factorio.com/mod/Bulldozzer) by InsanePyro
 
   * Latest version: 1.0.0 (3 years ago).
-
-  * Not yet updated for Factorio 2.0.
-
-  * TODO: Examine source code.
 
 * [Dozer](https://mods.factorio.com/mod/dozer) by shanemadden: Provides
   a tank-like vehicle that destroys cliffs and mines mineable
