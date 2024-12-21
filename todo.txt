@@ -1,0 +1,13 @@
+Bulldozer Module TODO
+=====================
+
+Implement as an equipment module
+
+Rename the mod to use the name "equipment"?
+
+Make it work with vehicles
+
+Improve the placeholder graphics
+
+
+EOF
