@@ -53,6 +53,13 @@ data:extend({
     maximum_value = 100,
   },
 
+  -- Whether to do anything for this player.
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-enable-for-player",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
 });
 
 

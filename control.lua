@@ -225,6 +225,11 @@ local function player_check_for_obstacles(player, cur_tick)
     return;
   end;
 
+  if (not settings.get_player_settings(player.index)["bulldozer-equipment-enable-for-player"].value) then
+    diag(5, "Player " .. player.index .. " has disabled the mod.");
+    return;
+  end;
+
   if (player.character == nil) then
     diag(5, "Player " .. player.index .. " has no character.");
     return;
