@@ -17,6 +17,69 @@ space to store the trash, and armor and armament to deal with hostiles.
 It is also useful out of combat, conveniently clearing obstacles and
 providing buildable space otherwise blocked by water.
 
+
+Usage
+=====
+
+First, research Bulldozer Equipment.  Its prerequisites are
+Processor Unit and Belt Immunity Equipment.
+
+Create the Bulldozer Equipment item and put it into the equipment grid
+of a player character or vehicle.  Ensure the grid can supply the
+required 200 kW of power.  This equipment also provides the function of
+the Belt Immunity equipment, so you can remove that if you have it.
+
+Approach some trees or rocks.  They will be automatically marked for
+destruction.
+
+
+Landfilling water
+-----------------
+
+The landfill function requires that you first create a blueprint
+containing exactly one landfill tile and put it into the *game*
+blueprint library:
+
+1. Place a tile of landfill.
+
+![Placed landfill tile](doc/placed-landfill-tile.png)
+
+2. Press Alt-B, then select just that *one* tile to create a blueprint
+   of it.  The blueprint must have exactly one tile and no entities for
+   the mod to recognize it.
+
+![Select the landfill tile](doc/select-landfill-tile.png)
+
+3. Press "Create blueprint" to finish creating it.  You can give the
+   blueprint a name if you want, but the mod does not care about its
+   name.
+
+![Set up new blueprint](doc/set-up-new-blueprint.png)
+
+4. With the new blueprint still on your mouse cursor, bress B to open
+   the blueprint library, then click on the "Game blueprints" tab.
+
+![Game blueprints](doc/game-blueprints.png)
+
+5. Click in any open square to place the blueprint into that tab.
+
+![Blueprint in the library](doc/blueprint-in-library.png)
+
+6. Press E to close the blueprint library.
+
+Now, approach some water, and it will be automatically marked for
+landfilling using the created blueprint.
+
+
+Landfilling cliffs
+------------------
+
+Cliffs will be automatically marked for destruction once Cliff
+Explosives have been researched.  In the Space Age expansion, that
+requires visiting another planet.  Until then, the Bulldozer Equipment
+will ignore cliffs.
+
+
 Related mods
 ============
 
@@ -79,4 +142,4 @@ Acknowledgements
 ================
 
 The bulldozer icon ![Bulldozer Icon](thumbnail.png) comes from
-<a href="https://www.freepik.com/icon/bulldozer_10984315#fromView=keyword&page=2&position=94&uuid=7c749113-0d7b-4d98-8946-5d19b072c52d">Freepik</a>:
+<a href="https://www.freepik.com/icon/bulldozer_10984315#fromView=keyword&page=2&position=94&uuid=7c749113-0d7b-4d98-8946-5d19b072c52d">Freepik</a>.

@@ -1,7 +1,7 @@
 Bulldozer Equipment TODO
 ========================
 
-Explain in the README how to create the landfill tile blueprint.
+Put the recipe behind technology research
 
 
 EOF
