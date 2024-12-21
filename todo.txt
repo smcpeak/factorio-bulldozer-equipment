@@ -1,8 +1,6 @@
 Bulldozer Equipment TODO
 ========================
 
-Make it work with vehicles
-
 Performance optimization
 
 Improve the placeholder graphics

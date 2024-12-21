@@ -110,62 +110,60 @@ end;
 
 
 -- ------------------------ Mod-specific logic -------------------------
--- Scan near one player for natural obstacles if it has the necessary
+-- Scan near one entity for natural obstacles if it has the necessary
 -- equipment.
-local function player_check_for_obstacles(player)
-  if (player.character == nil) then
-    diag(5, "Player " .. player.index .. " has no character.");
-    return;
-  end;
+local function entity_check_for_obstacles(actor_entity)
+  local actor_entity_desc =
+    actor_entity.name .. " " .. actor_entity.unit_number;
 
-  local equipment_grid = player.character.grid;
+  local equipment_grid = actor_entity.grid;
   if (equipment_grid == nil) then
-    diag(5, "Player " .. player.index .. " has no equipment grid.");
+    diag(5, actor_entity_desc .. " has no equipment grid.");
     return;
   end;
 
   local bulldozer_equipment = equipment_grid.find("bulldozer-equipment");
   if (bulldozer_equipment == nil) then
-    diag(5, "Player " .. player.index .. " does not have a bulldozer.");
+    diag(5, actor_entity_desc .. " does not have a bulldozer.");
     return;
   end;
 
   local required_energy = bulldozer_equipment.max_energy / 2;
   if (bulldozer_equipment.energy < required_energy) then
-    diag(4, "Player " .. player.index ..
+    diag(4, actor_entity_desc ..
             " has a bulldozer with " .. bulldozer_equipment.energy ..
             " J, but that is less than the required " .. required_energy ..
             " J, so it is not operational.");
     return;
   end;
 
-  local include_cliffs = player.force.cliff_deconstruction_enabled;
+  local include_cliffs = actor_entity.force.cliff_deconstruction_enabled;
 
-  diag(5, "Player " .. player.index ..
+  diag(5, actor_entity_desc ..
           ": Scanning area within " .. obstacle_entity_radius ..
-          " units of " .. pos_str(player.position) ..
+          " units of " .. pos_str(actor_entity.position) ..
           " for obstacle entities, " ..
           (include_cliffs and "including" or "NOT including") ..
           " cliffs.");
 
-  local area = bounding_box_with_radius(player.position, obstacle_entity_radius);
+  local area = bounding_box_with_radius(actor_entity.position, obstacle_entity_radius);
   local types = {"tree", "simple-entity"};
   if (include_cliffs) then
     table.insert(types, "cliff");
   end;
 
-  local entities = player.surface.find_entities_filtered{
+  local obstacle_entities = actor_entity.surface.find_entities_filtered{
     area = area,
     type = types,
   };
-  for _, entity in pairs(entities) do
+  for _, obstacle_entity in pairs(obstacle_entities) do
     -- Filter out non-rocks.
     ignore = false;
-    if (entity.type == "simple-entity") then
-      if (not entity.prototype.count_as_rock_for_filtered_deconstruction) then
-        diag(5, "Simple entity at " .. pos_str(entity.position) ..
-                ", called \"" .. entity.name ..
-                "\", is not a rock, so ignoring.");
+    if (obstacle_entity.type == "simple-entity") then
+      if (not obstacle_entity.prototype.count_as_rock_for_filtered_deconstruction) then
+        diag(5, "Simple entity at " .. pos_str(obstacle_entity.position) ..
+                " called \"" .. obstacle_entity.name ..
+                "\" is not a rock, so ignoring.");
         ignore = true;
       end;
     end;
@@ -176,43 +174,54 @@ local function player_check_for_obstacles(player)
       -- that means what I pass here will simply be ignored, but it is
       -- possible that in fact it is accepted and respected, like for
       -- tiles.
-      if (not entity.to_be_deconstructed(player.force)) then
-        diag(3, "Ordering deconstruction of " .. entity.name ..
-                " at " .. pos_str(entity.position) .. ".");
-        entity.order_deconstruction(player.force, player);
+      if (not obstacle_entity.to_be_deconstructed(actor_entity.force)) then
+        diag(3, "Ordering deconstruction of " .. obstacle_entity.name ..
+                " at " .. pos_str(obstacle_entity.position) .. ".");
+        obstacle_entity.order_deconstruction(actor_entity.force);
       else
-        diag(4, "Not ordering deconstruction of " .. entity.name ..
-                " at " .. pos_str(entity.position) ..
+        diag(4, "Not ordering deconstruction of " .. obstacle_entity.name ..
+                " at " .. pos_str(obstacle_entity.position) ..
                 " because it is already marked.");
       end;
     end;
   end;
 
   if (landfill_blueprint ~= nil and landfill_blueprint.valid) then
-    diag(5, "Player " .. player.index ..
+    diag(5, actor_entity_desc ..
             ": Scanning area within " .. obstacle_tile_radius ..
-            " units of " .. pos_str(player.position) ..
+            " units of " .. pos_str(actor_entity.position) ..
             " for obstacle tiles.");
 
-    area = bounding_box_with_radius(player.position, obstacle_tile_radius);
+    area = bounding_box_with_radius(actor_entity.position, obstacle_tile_radius);
 
-    local tiles = player.surface.find_tiles_filtered{
+    local tiles = actor_entity.surface.find_tiles_filtered{
       area = area,
       name = landfillable_tile_names,
       has_tile_ghost = false,
-      force = player.force,
+      force = actor_entity.force,
     };
     for _, tile in pairs(tiles) do
       diag(3, "Ordering landfill of " .. tile.name ..
               " tile at " .. pos_str(tile.position) .. ".");
       landfill_blueprint.build_blueprint{
-        surface = player.surface,
-        force = player.force,
+        surface = actor_entity.surface,
+        force = actor_entity.force,
         position = tile.position,
         raise_built = true,
       };
     end;
   end;
+end;
+
+
+-- Scan near one player.
+local function player_check_for_obstacles(player)
+  if (player.character == nil) then
+    diag(5, "Player " .. player.index .. " has no character.");
+    return;
+  end;
+
+  entity_check_for_obstacles(player.character);
 end;
 
 
@@ -222,6 +231,21 @@ local function all_players_check_for_obstacles()
     player_check_for_obstacles(player);
   end;
 end;
+
+
+-- Scan near one vehicle.
+local function vehicle_check_for_obstacles(vehicle)
+  entity_check_for_obstacles(vehicle);
+end;
+
+
+-- Scan the areas near all moving vehicles.
+local function all_vehicles_check_for_obstacles()
+  for _, vehicle in pairs(game.get_vehicles{is_moving=true}) do
+    vehicle_check_for_obstacles(vehicle);
+  end;
+end;
+
 
 -- Try to find a blueprint to use from the game library.
 local function refresh_landfill_blueprint()
@@ -304,6 +328,7 @@ local function read_configuration_settings()
   -- Re-establish the tick handlers with the new periods.
   script.on_nth_tick(check_period_ticks, function(e)
     all_players_check_for_obstacles();
+    all_vehicles_check_for_obstacles();
   end);
   script.on_nth_tick(refresh_landfill_blueprint_period_ticks, function(e)
     refresh_landfill_blueprint();
