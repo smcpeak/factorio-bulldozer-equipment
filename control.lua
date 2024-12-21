@@ -82,6 +82,9 @@ local landfillable_tile_names = {
 --
 local landfill_blueprint = nil;
 
+-- For each player, the most recent tick on which they moved.
+local player_index_to_last_move_tick = {};
+
 
 -- ------------------------- Utility functions -------------------------
 -- Log 'str' if we are at verbosity 'v' or higher.
@@ -219,7 +222,31 @@ end;
 
 
 -- Scan near one player.
-local function player_check_for_obstacles(player)
+local function player_check_for_obstacles(player, cur_tick)
+  local moved_tick = player_index_to_last_move_tick[player.index];
+  if (moved_tick == nil) then
+    --[[
+    diag(5, "Player " .. player.index ..
+            " has not moved since the mod was loaded, skipping.");
+    --]]
+    return;
+  end;
+
+  local ticks_since_moved = cur_tick - moved_tick;
+  if (ticks_since_moved > check_period_ticks) then
+    -- Normally commented-out since this is the usual case and the
+    -- whole point is optimization.
+    --[[
+    diag(5, "Player " .. player.index ..
+            " last moved on tick " .. moved_tick ..
+            ", but it is now tick " .. cur_tick ..
+            ", which is " .. ticks_since_moved .. " elapsed ticks, " ..
+            "which is greater than the current check period of " .. check_period_ticks ..
+            ", so skipping this player.");
+    --]]
+    return;
+  end;
+
   if (player.character == nil) then
     diag(5, "Player " .. player.index .. " has no character.");
     return;
@@ -230,9 +257,9 @@ end;
 
 
 -- Scan the areas near all players.
-local function all_players_check_for_obstacles()
+local function all_players_check_for_obstacles(tick)
   for _, player in pairs(game.players) do
-    player_check_for_obstacles(player);
+    player_check_for_obstacles(player, tick);
   end;
 end;
 
@@ -331,7 +358,7 @@ local function read_configuration_settings()
 
   -- Re-establish the tick handlers with the new periods.
   script.on_nth_tick(check_period_ticks, function(e)
-    all_players_check_for_obstacles();
+    all_players_check_for_obstacles(e.tick);
     all_vehicles_check_for_obstacles();
   end);
   script.on_nth_tick(refresh_landfill_blueprint_period_ticks, function(e)
@@ -342,9 +369,21 @@ local function read_configuration_settings()
 end;
 
 
+-- Called when a player moves.
+local function player_changed_position(e)
+  --diag(5, "Player " .. e.player_index ..
+  --        " moved on tick " .. e.tick .. ".");
+  player_index_to_last_move_tick[e.player_index] = e.tick;
+end;
+
+
 -- -------------------------- Initialization ---------------------------
 read_configuration_settings();
-script.on_event(defines.events.on_runtime_mod_setting_changed, read_configuration_settings);
+script.on_event(defines.events.on_runtime_mod_setting_changed,
+  read_configuration_settings);
+
+script.on_event(defines.events.on_player_changed_position,
+  player_changed_position);
 
 
 -- EOF

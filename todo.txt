@@ -1,8 +1,6 @@
 Bulldozer Equipment TODO
 ========================
 
-Performance optimization
-
 Improve the placeholder graphics
 
 Fix landfillable_tile_names
