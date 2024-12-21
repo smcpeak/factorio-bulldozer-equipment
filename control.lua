@@ -2,6 +2,10 @@
 
 
 -- ------------------------ Configuration data -------------------------
+-- The default values in this section are overwritten when the user
+-- settings are read, but for convenience, these values are the same
+-- as the default setting values.
+
 -- How much to log, from among:
 --   0: Nothing.
 --   1: Only things that indicate a serious problem.  These suggest a
@@ -11,7 +15,7 @@
 --   4: Individual algorithm steps only of interest to a developer.
 --   5: Even more verbose developer details, especially things that
 --      happen periodically regardless of anything else.
-local diagnostic_verbosity = 5;  -- TODO: Reset to 1.
+local diagnostic_verbosity = 1;
 
 -- Time between checks for nearby obstacles, in ticks.
 local check_period_ticks = 15;
@@ -21,7 +25,7 @@ local check_period_ticks = 15;
 -- The relevant check is pretty fast, but there's no need to do it
 -- often.
 --
--- This must be different from `check_period_ticks`.  The code that
+-- This must be different than `check_period_ticks`.  The code that
 -- reads the user's choices compensates when necessary.
 --
 local refresh_landfill_blueprint_period_ticks = 300;
@@ -31,11 +35,11 @@ local obstacle_entity_radius = 16;
 
 -- Maximum distance to a "nearby" obstacle tile, in game grid units.
 --
--- This is different from the entity radius because, in playtesting,
--- the larger radius seems excessive and obnoxious for tiles, while the
--- smaller radius is not big enough for rocks and trees.  In part,
--- that relates to the much bigger investment in resources required to
--- clear obstacle tiles versus obstacle entities.
+-- This is different from the entity radius because, in playtesting, the
+-- larger radius seems excessive and obnoxious for tiles, while the
+-- smaller radius is not big enough for rocks and trees.  In part, that
+-- relates to the much bigger investment in time and resources required
+-- to clear obstacle tiles versus obstacle entities.
 --
 local obstacle_tile_radius = 8;
 
@@ -311,11 +315,11 @@ local function read_configuration_settings()
   -- Clear any existing tick handlers.
   script.on_nth_tick(nil);
 
-  --diagnostic_verbosity                    = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
-  --check_period_ticks                      = settings.global["bulldozer-equipment-check-period-ticks"].value;
-  --refresh_landfill_blueprint_period_ticks = settings.global["bulldozer-equipment-refresh-landfill-blueprint-period-ticks"].value;
-  --obstacle_entity_radius                  = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
-  --obstacle_tile_radius                    = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
+  diagnostic_verbosity                    = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
+  check_period_ticks                      = settings.global["bulldozer-equipment-check-period-ticks"].value;
+  refresh_landfill_blueprint_period_ticks = settings.global["bulldozer-equipment-refresh-landfill-blueprint-period-ticks"].value;
+  obstacle_entity_radius                  = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
+  obstacle_tile_radius                    = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
 
   -- The API uses the period as an identifier of the registered
   -- handlers, so it is awkward to register two handlers with the same
@@ -340,6 +344,7 @@ end;
 
 -- -------------------------- Initialization ---------------------------
 read_configuration_settings();
+script.on_event(defines.events.on_runtime_mod_setting_changed, read_configuration_settings);
 
 
 -- EOF
