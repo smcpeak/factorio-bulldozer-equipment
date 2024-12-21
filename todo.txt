@@ -1,7 +1,5 @@
 Bulldozer Equipment TODO
 ========================
 
-Put the recipe behind technology research
-
 
 EOF
