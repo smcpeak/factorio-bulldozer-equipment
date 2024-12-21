@@ -1,0 +1,10 @@
+{
+  "name": "BulldozerModule",
+  "version": "1.0.0",
+  "title": "Bulldozer Module",
+  "author": "Scott McPeak",
+  "homepage": "https://github.com/smcpeak/factorio-bulldozer-module",
+  "factorio_version": "2.0",
+  "dependencies": ["base >= 2.0"],
+  "description": "Provides an equipment grid module that automatically orders the removal of nearby natural obstacles: trees, rocks, cliffs, and water."
+}
