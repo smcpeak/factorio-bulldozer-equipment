@@ -43,34 +43,12 @@ local obstacle_entity_radius = 16;
 --
 local obstacle_tile_radius = 8;
 
--- List of names of tiles we can landfill.
---
--- TODO: Compute this during the prototype stage as
--- `data.item.landfill.place_as_tile.tile_condition`.
---
-local landfillable_tile_names = {
-  "water",
-  "deepwater",
-  "water-green",
-  "deepwater-green",
-  "water-mud",
-  "water-shallow",
-  --[[
-  "wetland-light-green-slime",
-  "wetland-green-slime",
-  "wetland-light-dead-skin",
-  "wetland-dead-skin",
-  "wetland-pink-tentacle",
-  "wetland-red-tentacle",
-  "wetland-yumako",
-  "wetland-jellynut",
-  "wetland-blue-slime",
-  "gleba-deep-lake"
-  --]]
-};
-
 
 -- --------------------------- Runtime data ----------------------------
+-- List of names of tiles we can landfill.  Set below, during
+-- initialization.
+local landfillable_tile_names = {};
+
 -- LuaRecord of the blueprint to use to order landfill to be
 -- constructed.  This is refreshed periodically.  It might become
 -- invalid at any time.
@@ -377,6 +355,48 @@ local function player_changed_position(e)
 end;
 
 
+-- Set `landfillable_tile_names`.
+--
+-- I would prefer to just read
+-- `data.raw.item.landfill.place_as_tile.tile_condition`, but that
+-- information does not seem to be available in the control stage, and
+-- there is no mechanism for passing information from the data stage.
+--
+-- So, instead, I query each element of a hardcoded list of tiles, and
+-- add those that are found to exist.  (`find_tiles_filtered` will
+-- throw an error if I pass the name of a tile that does not exist.)
+--
+local function set_landfillable_tile_names()
+  -- These are the landfillable tiles in the base game and Space Age.
+  local candidates = {
+    "water",
+    "deepwater",
+    "water-green",
+    "deepwater-green",
+    "water-mud",
+    "water-shallow",
+    "wetland-light-green-slime",
+    "wetland-green-slime",
+    "wetland-light-dead-skin",
+    "wetland-dead-skin",
+    "wetland-pink-tentacle",
+    "wetland-red-tentacle",
+    "wetland-yumako",
+    "wetland-jellynut",
+    "wetland-blue-slime",
+    "gleba-deep-lake"
+  };
+
+  landfillable_tile_names = {};
+  for _, candidate in pairs(candidates) do
+    if (prototypes.tile[candidate] ~= nil) then
+      diag(4, "Landfillable tile: " .. candidate);
+      table.insert(landfillable_tile_names, candidate);
+    end;
+  end;
+end;
+
+
 -- -------------------------- Initialization ---------------------------
 read_configuration_settings();
 script.on_event(defines.events.on_runtime_mod_setting_changed,
@@ -384,6 +404,8 @@ script.on_event(defines.events.on_runtime_mod_setting_changed,
 
 script.on_event(defines.events.on_player_changed_position,
   player_changed_position);
+
+set_landfillable_tile_names();
 
 
 -- EOF

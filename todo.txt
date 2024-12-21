@@ -3,7 +3,7 @@ Bulldozer Equipment TODO
 
 Improve the placeholder graphics
 
-Fix landfillable_tile_names
+Explain in the README how to create the landfill tile blueprint.
 
 
 EOF
