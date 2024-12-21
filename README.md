@@ -73,3 +73,10 @@ Only for Factorio 1.x
 
   * Destruction and mining are instantaneous rather than being done by
     robots.
+
+
+Acknowledgements
+================
+
+The bulldozer icon ![Bulldozer Icon](thumbnail.png) comes from
+<a href="https://www.freepik.com/icon/bulldozer_10984315#fromView=keyword&page=2&position=94&uuid=7c749113-0d7b-4d98-8946-5d19b072c52d">Freepik</a>:

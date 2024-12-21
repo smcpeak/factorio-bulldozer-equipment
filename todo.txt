@@ -1,8 +1,6 @@
 Bulldozer Equipment TODO
 ========================
 
-Improve the placeholder graphics
-
 Explain in the README how to create the landfill tile blueprint.
 
 
