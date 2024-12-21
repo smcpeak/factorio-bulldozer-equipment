@@ -56,7 +56,7 @@ blueprint library:
 
 ![Set up new blueprint](doc/set-up-new-blueprint.png)
 
-4. With the new blueprint still on your mouse cursor, bress B to open
+4. With the new blueprint still on your mouse cursor, press B to open
    the blueprint library, then click on the "Game blueprints" tab.
 
 ![Game blueprints](doc/game-blueprints.png)
@@ -78,6 +78,17 @@ Cliffs will be automatically marked for destruction once Cliff
 Explosives have been researched.  In the Space Age expansion, that
 requires visiting another planet.  Until then, the Bulldozer Equipment
 will ignore cliffs.
+
+
+Performance considerations
+==========================
+
+For both player characters and vehicles, the mod only activates when the
+actor moves, so the cost is generally small.
+
+The process of designating tiles for landfilling is somewhat slow, so if
+the mod is configured to use a large tile search radius and short period
+between checks, there could be a UPS hit when approaching a shoreline.
 
 
 Related mods
