@@ -9,7 +9,9 @@
 --   2: Relatively infrequent things possibly of interest to the user.
 --   3: More details, also of potential user interest.
 --   4: Individual algorithm steps only of interest to a developer.
-local diagnostic_verbosity = 4;  -- TODO: Reset to 1.
+--   5: Even more verbose developer details, especially things that
+--      happen periodically regardless of anything else.
+local diagnostic_verbosity = 5;  -- TODO: Reset to 1.
 
 -- Time between checks for nearby obstacles, in ticks.
 local check_period_ticks = 15;
@@ -108,91 +110,122 @@ end;
 
 
 -- ------------------------ Mod-specific logic -------------------------
--- Scan the area near entities equipped with the module for obstacles
--- and order their deconstruction.
-local function check_for_obstacles()
-  for _, player in pairs(game.players) do
-    local include_cliffs = player.force.cliff_deconstruction_enabled;
+-- Scan near one player for natural obstacles if it has the necessary
+-- equipment.
+local function player_check_for_obstacles(player)
+  if (player.character == nil) then
+    diag(5, "Player " .. player.index .. " has no character.");
+    return;
+  end;
 
-    diag(4, "For player " .. player.index ..
-            ", scanning area within " .. obstacle_entity_radius ..
+  local equipment_grid = player.character.grid;
+  if (equipment_grid == nil) then
+    diag(5, "Player " .. player.index .. " has no equipment grid.");
+    return;
+  end;
+
+  local bulldozer_equipment = equipment_grid.find("bulldozer-equipment");
+  if (bulldozer_equipment == nil) then
+    diag(5, "Player " .. player.index .. " does not have a bulldozer.");
+    return;
+  end;
+
+  local required_energy = bulldozer_equipment.max_energy / 2;
+  if (bulldozer_equipment.energy < required_energy) then
+    diag(4, "Player " .. player.index ..
+            " has a bulldozer with " .. bulldozer_equipment.energy ..
+            " J, but that is less than the required " .. required_energy ..
+            " J, so it is not operational.");
+    return;
+  end;
+
+  local include_cliffs = player.force.cliff_deconstruction_enabled;
+
+  diag(5, "Player " .. player.index ..
+          ": Scanning area within " .. obstacle_entity_radius ..
+          " units of " .. pos_str(player.position) ..
+          " for obstacle entities, " ..
+          (include_cliffs and "including" or "NOT including") ..
+          " cliffs.");
+
+  local area = bounding_box_with_radius(player.position, obstacle_entity_radius);
+  local types = {"tree", "simple-entity"};
+  if (include_cliffs) then
+    table.insert(types, "cliff");
+  end;
+
+  local entities = player.surface.find_entities_filtered{
+    area = area,
+    type = types,
+  };
+  for _, entity in pairs(entities) do
+    -- Filter out non-rocks.
+    ignore = false;
+    if (entity.type == "simple-entity") then
+      if (not entity.prototype.count_as_rock_for_filtered_deconstruction) then
+        diag(5, "Simple entity at " .. pos_str(entity.position) ..
+                ", called \"" .. entity.name ..
+                "\", is not a rock, so ignoring.");
+        ignore = true;
+      end;
+    end;
+
+    if (not ignore) then
+      -- The factorio API docs for `LuaEntity.to_be_deconstructed` do
+      -- not mention being able to pass a "force" argument.  I think
+      -- that means what I pass here will simply be ignored, but it is
+      -- possible that in fact it is accepted and respected, like for
+      -- tiles.
+      if (not entity.to_be_deconstructed(player.force)) then
+        diag(3, "Ordering deconstruction of " .. entity.name ..
+                " at " .. pos_str(entity.position) .. ".");
+        entity.order_deconstruction(player.force, player);
+      else
+        diag(4, "Not ordering deconstruction of " .. entity.name ..
+                " at " .. pos_str(entity.position) ..
+                " because it is already marked.");
+      end;
+    end;
+  end;
+
+  if (landfill_blueprint ~= nil and landfill_blueprint.valid) then
+    diag(5, "Player " .. player.index ..
+            ": Scanning area within " .. obstacle_tile_radius ..
             " units of " .. pos_str(player.position) ..
-            " for obstacle entities, " ..
-            (include_cliffs and "including" or "NOT including") ..
-            " cliffs.");
+            " for obstacle tiles.");
 
-    local area = bounding_box_with_radius(player.position, obstacle_entity_radius);
-    local types = {"tree", "simple-entity"};
-    if (include_cliffs) then
-      table.insert(types, "cliff");
-    end;
+    area = bounding_box_with_radius(player.position, obstacle_tile_radius);
 
-    local entities = player.surface.find_entities_filtered{
+    local tiles = player.surface.find_tiles_filtered{
       area = area,
-      type = types,
+      name = landfillable_tile_names,
+      has_tile_ghost = false,
+      force = player.force,
     };
-    for _, entity in pairs(entities) do
-      -- Filter out non-rocks.
-      ignore = false;
-      if (entity.type == "simple-entity") then
-        if (not entity.prototype.count_as_rock_for_filtered_deconstruction) then
-          diag(4, "Simple entity at " .. pos_str(entity.position) ..
-                  ", called \"" .. entity.name ..
-                  "\", is not a rock, so ignoring.");
-          ignore = true;
-        end;
-      end;
-
-      if (not ignore) then
-        -- The factorio API docs for `LuaEntity.to_be_deconstructed` do
-        -- not mention being able to pass a "force" argument.  I think
-        -- that means what I pass here will simply be ignored, but it is
-        -- possible that in fact it is accepted and respected, like for
-        -- tiles.
-        if (not entity.to_be_deconstructed(player.force)) then
-          diag(3, "Ordering deconstruction of " .. entity.name ..
-                  " at " .. pos_str(entity.position) .. ".");
-          entity.order_deconstruction(player.force, player);
-        else
-          diag(4, "Not ordering deconstruction of " .. entity.name ..
-                  " at " .. pos_str(entity.position) ..
-                  " because it is already marked.");
-        end;
-      end;
-    end;
-
-    if (landfill_blueprint ~= nil and landfill_blueprint.valid) then
-      diag(4, "For player " .. player.index ..
-              ", scanning area within " .. obstacle_tile_radius ..
-              " units of " .. pos_str(player.position) ..
-              " for obstacle tiles.");
-
-      area = bounding_box_with_radius(player.position, obstacle_tile_radius);
-
-      local tiles = player.surface.find_tiles_filtered{
-        area = area,
-        name = landfillable_tile_names,
-        has_tile_ghost = false,
+    for _, tile in pairs(tiles) do
+      diag(3, "Ordering landfill of " .. tile.name ..
+              " tile at " .. pos_str(tile.position) .. ".");
+      landfill_blueprint.build_blueprint{
+        surface = player.surface,
         force = player.force,
+        position = tile.position,
+        raise_built = true,
       };
-      for _, tile in pairs(tiles) do
-        diag(3, "Ordering landfill of " .. tile.name ..
-                " tile at " .. pos_str(tile.position) .. ".");
-        landfill_blueprint.build_blueprint{
-          surface = player.surface,
-          force = player.force,
-          position = tile.position,
-          raise_built = true,
-        };
-      end;
     end;
   end;
 end;
 
 
+-- Scan the areas near all players.
+local function all_players_check_for_obstacles()
+  for _, player in pairs(game.players) do
+    player_check_for_obstacles(player);
+  end;
+end;
+
 -- Try to find a blueprint to use from the game library.
 local function refresh_landfill_blueprint()
-  diag(4, "Refreshing the landfill blueprint.");
+  diag(5, "Refreshing the landfill blueprint.");
   local chosen_blueprint = nil;
 
   for _, blueprint in pairs(game.blueprints) do
@@ -200,7 +233,7 @@ local function refresh_landfill_blueprint()
       -- Require that it have no entities.
       local entity_count = blueprint.get_blueprint_entity_count();
       if (entity_count ~= 0) then
-        diag(4, "Ignoring blueprint with " .. entity_count ..
+        diag(5, "Ignoring blueprint with " .. entity_count ..
                 " entities.");
         break;
       end;
@@ -216,18 +249,18 @@ local function refresh_landfill_blueprint()
         end;
 
         if (num_landfill_tiles == 1) then
-          diag(3, "Found a blueprint with one landfill tile, using it.");
+          diag(5, "Found a blueprint with one landfill tile, using it.");
           chosen_blueprint = blueprint;
           break;
 
         else
-          diag(4, "Found a blueprint with " .. num_landfill_tiles ..
+          diag(5, "Found a blueprint with " .. num_landfill_tiles ..
                   " landfill tiles, ignoring.");
 
         end;
 
       else
-        diag(4, "Found a blueprint with no tiles or entities.");
+        diag(5, "Found a blueprint with no tiles or entities.");
 
       end;
     end;
@@ -270,7 +303,7 @@ local function read_configuration_settings()
 
   -- Re-establish the tick handlers with the new periods.
   script.on_nth_tick(check_period_ticks, function(e)
-    check_for_obstacles();
+    all_players_check_for_obstacles();
   end);
   script.on_nth_tick(refresh_landfill_blueprint_period_ticks, function(e)
     refresh_landfill_blueprint();
