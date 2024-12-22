@@ -36,6 +36,12 @@ local obstacle_entity_radius = 16;
 --
 local obstacle_tile_radius = 8;
 
+-- Whether to clear each specific obstacle.
+local want_remove_trees = true;
+local want_remove_rocks = true;
+local want_remove_cliffs = true;
+local want_remove_water = true;
+
 
 -- --------------------------- Runtime data ----------------------------
 -- List of names of tiles we can landfill.  Set below, during
@@ -119,81 +125,92 @@ local function entity_check_for_obstacles(actor_entity)
     actor_entity.name .. " " .. actor_entity.unit_number;
 
   local force = actor_entity.force;
-  local include_cliffs = force.cliff_deconstruction_enabled;
-
-  diag(5, actor_entity_desc ..
-          ": Scanning area within " .. obstacle_entity_radius ..
-          " units of " .. pos_str(actor_entity.position) ..
-          " for obstacle entities, " ..
-          (include_cliffs and "including" or "NOT including") ..
-          " cliffs.");
-
-  local area = bounding_box_with_radius(actor_entity.position, obstacle_entity_radius);
-  local types = {"tree", "simple-entity"};
-  if (include_cliffs) then
-    table.insert(types, "cliff");
-  end;
-
   local surface = actor_entity.surface;
-  local obstacle_entities = surface.find_entities_filtered{
-    area = area,
-    type = types,
-  };
-  for _, obstacle_entity in pairs(obstacle_entities) do
-    -- Filter out non-rocks.
-    ignore = false;
-    if (obstacle_entity.type == "simple-entity") then
-      if (not obstacle_entity.prototype.count_as_rock_for_filtered_deconstruction) then
-        diag(5, "Simple entity at " .. pos_str(obstacle_entity.position) ..
-                " called \"" .. obstacle_entity.name ..
-                "\" is not a rock, so ignoring.");
-        ignore = true;
-      end;
+
+  local include_cliffs = want_remove_cliffs and force.cliff_deconstruction_enabled;
+  if (want_remove_trees or
+      want_remove_rocks or
+      include_cliffs) then
+    local types = {};
+    if (want_remove_trees) then
+      table.insert(types, "tree");
+    end;
+    if (want_remove_rocks) then
+      table.insert(types, "simple-entity");
+    end;
+    if (include_cliffs) then
+      table.insert(types, "cliff");
     end;
 
-    if (not ignore) then
-      -- The factorio API docs for `LuaEntity.to_be_deconstructed` do
-      -- not mention being able to pass a "force" argument.  I think
-      -- that means what I pass here will simply be ignored, but it is
-      -- possible that in fact it is accepted and respected, like for
-      -- tiles.
-      if (not obstacle_entity.to_be_deconstructed(force)) then
-        diag(3, "Ordering deconstruction of " .. obstacle_entity.name ..
-                " at " .. pos_str(obstacle_entity.position) .. ".");
-        obstacle_entity.order_deconstruction(force);
-      else
-        diag(4, "Not ordering deconstruction of " .. obstacle_entity.name ..
-                " at " .. pos_str(obstacle_entity.position) ..
-                " because it is already marked.");
+    diag(5, actor_entity_desc ..
+            ": Scanning area within " .. obstacle_entity_radius ..
+            " units of " .. pos_str(actor_entity.position) ..
+            " for obstacle entities: " .. serpent.line(types));
+
+    local area = bounding_box_with_radius(actor_entity.position, obstacle_entity_radius);
+
+    local obstacle_entities = surface.find_entities_filtered{
+      area = area,
+      type = types,
+    };
+    for _, obstacle_entity in pairs(obstacle_entities) do
+      -- Filter out non-rocks.
+      ignore = false;
+      if (obstacle_entity.type == "simple-entity") then
+        if (not obstacle_entity.prototype.count_as_rock_for_filtered_deconstruction) then
+          diag(5, "Simple entity at " .. pos_str(obstacle_entity.position) ..
+                  " called \"" .. obstacle_entity.name ..
+                  "\" is not a rock, so ignoring.");
+          ignore = true;
+        end;
+      end;
+
+      if (not ignore) then
+        -- The factorio API docs for `LuaEntity.to_be_deconstructed` do
+        -- not mention being able to pass a "force" argument.  I think
+        -- that means what I pass here will simply be ignored, but it is
+        -- possible that in fact it is accepted and respected, like for
+        -- tiles.
+        if (not obstacle_entity.to_be_deconstructed(force)) then
+          diag(3, "Ordering deconstruction of " .. obstacle_entity.name ..
+                  " at " .. pos_str(obstacle_entity.position) .. ".");
+          obstacle_entity.order_deconstruction(force);
+        else
+          diag(4, "Not ordering deconstruction of " .. obstacle_entity.name ..
+                  " at " .. pos_str(obstacle_entity.position) ..
+                  " because it is already marked.");
+        end;
       end;
     end;
   end;
 
-  diag(5, actor_entity_desc ..
-          ": Scanning area within " .. obstacle_tile_radius ..
-          " units of " .. pos_str(actor_entity.position) ..
-          " for obstacle tiles.");
+  if (want_remove_water) then
+    diag(5, actor_entity_desc ..
+            ": Scanning area within " .. obstacle_tile_radius ..
+            " units of " .. pos_str(actor_entity.position) ..
+            " for obstacle tiles.");
 
-  area = bounding_box_with_radius(actor_entity.position, obstacle_tile_radius);
+    area = bounding_box_with_radius(actor_entity.position, obstacle_tile_radius);
 
-  local tiles = surface.find_tiles_filtered{
-    area = area,
-    name = landfillable_tile_names,
-    has_tile_ghost = false,
-    force = force,
-  };
-  for _, tile in pairs(tiles) do
-    diag(3, "Ordering landfill of " .. tile.name ..
-            " tile at " .. pos_str(tile.position) .. ".");
-
-    surface.create_entity{
-      name = "tile-ghost",
-      expires = false,
+    local tiles = surface.find_tiles_filtered{
+      area = area,
+      name = landfillable_tile_names,
+      has_tile_ghost = false,
       force = force,
-      position = tile.position,
-      inner_name = "landfill",
-      raise_built = true,
     };
+    for _, tile in pairs(tiles) do
+      diag(3, "Ordering landfill of " .. tile.name ..
+              " tile at " .. pos_str(tile.position) .. ".");
+
+      surface.create_entity{
+        name = "tile-ghost",
+        expires = false,
+        force = force,
+        position = tile.position,
+        inner_name = "landfill",
+        raise_built = true,
+      };
+    end;
   end;
 end;
 
@@ -512,6 +529,10 @@ local function read_configuration_settings()
   landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;
   obstacle_entity_radius         = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
   obstacle_tile_radius           = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
+  want_remove_trees              = settings.global["bulldozer-equipment-want-remove-trees"].value;
+  want_remove_rocks              = settings.global["bulldozer-equipment-want-remove-rocks"].value;
+  want_remove_cliffs             = settings.global["bulldozer-equipment-want-remove-cliffs"].value;
+  want_remove_water              = settings.global["bulldozer-equipment-want-remove-water"].value;
 
   -- Re-establish the tick handlers with the new periods.
   if (obstacle_check_period_ticks == landfill_creation_period_ticks) then

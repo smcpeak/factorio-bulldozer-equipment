@@ -1,15 +1,7 @@
 Bulldozer Equipment TODO
 ========================
 
-Add options to selectively enable:
-  - Destruction of
-    - trees
-    - rocks
-    - cliffs
-  - Placement of landfill
-  - Creation of landfill
-
-Ideally this is per-player in a way that deals properly with vehicles.
+Make per-player options affect vehicles?
 
 
 EOF

@@ -53,6 +53,38 @@ data:extend({
     maximum_value = 100,
   },
 
+  -- Remove trees?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-remove-trees",
+    setting_type = "runtime-global",
+    default_value = true,
+  },
+
+  -- Remove rocks?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-remove-rocks",
+    setting_type = "runtime-global",
+    default_value = true,
+  },
+
+  -- Remove cliffs?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-remove-cliffs",
+    setting_type = "runtime-global",
+    default_value = true,
+  },
+
+  -- Remove water?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-remove-water",
+    setting_type = "runtime-global",
+    default_value = true,
+  },
+
   -- Whether to do anything for this player.
   {
     type = "bool-setting",
