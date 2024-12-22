@@ -136,30 +136,12 @@ local bulldozer_technology = {
 };
 
 
--- ----------------------------- Shortcut ------------------------------
-local bulldozer_shortcut = {
-  type = "shortcut",
-  name = "bulldozer-equipment",
-  order = "v[bulldozer-equipment]",
-  action = "lua",
-  localised_name = {"shortcut-name.bulldozer-equipment"},
-  toggleable = true,
-
-  -- The docs don't mention these attributes...
-  icon = mod_name .. "/graphics/icons/bulldozer_32.png",
-  icon_size = 32,
-  small_icon = mod_name .. "/graphics/icons/bulldozer_32.png",
-  small_icon_size = 32,
-};
-
-
 -- ---------------------- Add the new definitions ----------------------
 data:extend{
   bulldozer_equipment,
   bulldozer_item,
   bulldozer_recipe,
   bulldozer_technology,
-  bulldozer_shortcut,
 };
 
 

@@ -1,9 +1,6 @@
 Bulldozer Equipment TODO
 ========================
 
-More convenient UI to enable and disable, including separately enabling
-the landfill function
-
 Fix the need for a blueprint by placing ghosts directly
 
 Use exoskeleton as the base instead of belt immunity
