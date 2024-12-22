@@ -353,7 +353,7 @@ end;
 
 
 -- Called when a player moves.
-local function player_changed_position(e)
+local function on_player_changed_position(e)
   --diag(5, "Player " .. e.player_index ..
   --        " moved on tick " .. e.tick .. ".");
   player_index_to_last_move_tick[e.player_index] = e.tick;
@@ -408,7 +408,7 @@ script.on_event(defines.events.on_runtime_mod_setting_changed,
   read_configuration_settings);
 
 script.on_event(defines.events.on_player_changed_position,
-  player_changed_position);
+  on_player_changed_position);
 
 set_landfillable_tile_names();
 
