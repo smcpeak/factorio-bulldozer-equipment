@@ -94,6 +94,14 @@ data:extend({
     setting_type = "runtime-per-user",
     default_value = true,
   },
+
+  -- Convert trash into landfill?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-landfill-creation",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
 });
 
 

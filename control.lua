@@ -47,6 +47,9 @@ local landfill_creation_period_ticks = 60;
   bool want_remove_rocks = true;
   bool want_remove_cliffs = true;
   bool want_remove_water = true;
+
+  -- Whether to create landfill.
+  bool want_landfill_creation = true;
 --]]
 local player_index_to_prefs = {};
 
@@ -135,6 +138,7 @@ local function get_player_index_prefs(player_index)
     want_remove_rocks      = player_settings["bulldozer-equipment-want-remove-rocks"].value,
     want_remove_cliffs     = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
     want_remove_water      = player_settings["bulldozer-equipment-want-remove-water"].value,
+    want_landfill_creation = player_settings["bulldozer-equipment-want-landfill-creation"].value,
   };
   diag(4, "Player " .. player_index ..
           " has settings: " .. serpent.line(ret));
@@ -486,10 +490,16 @@ end;
 -- Possibly create landfill for one entity.
 local function entity_create_landfill(
   entity,
+  prefs,
   main_inv_id,
   trash_inv_id
 )
   local entity_desc = entity.name .. " " .. entity.unit_number;
+
+  if (not prefs.want_landfill_creation) then
+    diag(5, entity_desc .. " has landfill creation disabled.");
+    return;
+  end;
 
   local main_inv = entity.get_inventory(main_inv_id);
   if (not main_inv) then
@@ -521,11 +531,13 @@ end;
 -- Possibly create landfill for one player.
 local function player_create_landfill(player)
   -- Among other things, ensure the player has a character.
-  if (not player_bulldozer_prefs(player)) then
+  local prefs = player_bulldozer_prefs(player);
+  if (not prefs) then
     return;
   end;
 
   entity_create_landfill(player.character,
+    prefs,
     defines.inventory.character_main,
     defines.inventory.character_trash);
 end;
@@ -541,7 +553,8 @@ end;
 
 -- Possibly create landfill for one vehicle.
 local function vehicle_create_landfill(vehicle)
-  if (not entity_bulldozer_prefs(vehicle)) then
+  local prefs = entity_bulldozer_prefs(vehicle);
+  if (not prefs) then
     return;
   end;
 
@@ -554,6 +567,7 @@ local function vehicle_create_landfill(vehicle)
   -- https://forums.factorio.com/viewtopic.php?f=6&t=124950
   --
   entity_create_landfill(vehicle,
+    prefs,
     defines.inventory.car_trunk,
     defines.inventory.spider_trash);
 end;

@@ -1,7 +1,5 @@
 Bulldozer Equipment TODO
 ========================
 
-Separate per-player preference for landfill creation.
-
 
 EOF
