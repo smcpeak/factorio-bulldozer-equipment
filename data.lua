@@ -20,12 +20,13 @@ bulldozer_equipment.sprite = {
   priority = "medium",
 };
 
--- Twice the draw of ordinary belt immunity, since it (unavoidably) has
--- that function as well.
-bulldozer_equipment.energy_consumption = "200kW";
+-- A bit more than the draw of ordinary belt immunity, since it
+-- (unavoidably) has that function as well, but we generally don't care
+-- about that during combat.
+bulldozer_equipment.energy_consumption = "150kW";
 
 bulldozer_equipment.energy_source = {
-  buffer_capacity = "200kJ",
+  buffer_capacity = "150kJ",
   input_flow_limit = "240kW",
   type = "electric",
   usage_priority = "primary-input"
