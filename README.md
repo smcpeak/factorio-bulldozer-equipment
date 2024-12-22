@@ -94,22 +94,15 @@ between checks, there could be a UPS hit when approaching a shoreline.
 Related mods
 ============
 
-The "latest version" age in the list below is relative to 2024-12-21.
-
-
 Available for Factorio 2.x
 --------------------------
 
 * [Tree Cleaner](https://mods.factorio.com/mod/TreeCleaner) by
   GPS: Marks dead trees for deconstruction.
 
-  * Latest version: 0.2.1 (26 days ago)
-
 * [King Jo's Bulldozer](https://mods.factorio.com/mod/kj_bulldozer) by
   TheKingJo: A vehicle intended, I think, to simply ram into the trees
   and rocks.
-
-  * Latest version: 2.0.0 (30 days ago)
 
 
 Only for Factorio 1.x
@@ -117,28 +110,16 @@ Only for Factorio 1.x
 
 * [Bulldozer](https://mods.factorio.com/mod/bulldozer) by ckhawks
 
-  * Latest version: 1.3.4 (7 years ago).
-
 * [Bulldozer-Fixed](https://mods.factorio.com/mod/bulldozer-fixed) by
   amwdrizz: Obsolete fork of ckhawks Bulldozer.
 
-  * Latest version: 1.3.3 (8 years ago)
-
 * [Bulldozer](https://mods.factorio.com/mod/Bulldozzer) by InsanePyro
-
-  * Latest version: 1.0.0 (3 years ago).
 
 * [Dozer](https://mods.factorio.com/mod/dozer) by shanemadden: Provides
   a tank-like vehicle that destroys cliffs and mines mineable
   non-resource entities (trees, rocks, buildings) that are near the
-  vehicle.
-
-  * Latest version: 1.5.0 (4 years ago).
-
-  * It does not do anything about water.
-
-  * Destruction and mining are instantaneous rather than being done by
-    robots.
+  vehicle.  Destruction and mining are instantaneous rather than being
+  done by robots.
 
 
 Acknowledgements
