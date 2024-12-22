@@ -1,8 +1,5 @@
 Bulldozer Equipment TODO
 ========================
 
-Fix the need for a blueprint by placing ghosts directly
-
-
 
 EOF

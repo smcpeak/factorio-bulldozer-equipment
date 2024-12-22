@@ -23,16 +23,6 @@ data:extend({
     maximum_value = 300,
   },
 
-  -- Time between checks for a landfill blueprint.
-  {
-    type = "int-setting",
-    name = "bulldozer-equipment-refresh-landfill-blueprint-period-ticks",
-    setting_type = "runtime-global",
-    default_value = 300,
-    minimum_value = 1,
-    maximum_value = 3600,
-  },
-
   -- Maximum distance to a "nearby" obstacle entity.
   {
     type = "int-setting",

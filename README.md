@@ -29,52 +29,11 @@ of a player character or a vehicle.  Ensure the grid can supply the
 required 50 kW of power, although this only drains while moving since
 the mod only takes effect while moving.
 
-Approach some trees or rocks.  They will be automatically marked for
-destruction.
+If you now approach some trees or rocks, they will be automatically
+marked for destruction, and if you approach water, it will be marked for
+landfilling.
 
-
-Landfilling water
------------------
-
-The landfill function requires that you first create a blueprint
-containing exactly one landfill tile and put it into the *game*
-blueprint library:
-
-1. Place a tile of landfill.
-
-![Placed landfill tile](doc/placed-landfill-tile.png)
-
-2. Press Alt-B, then select just that *one* tile to create a blueprint
-   of it.  The blueprint must have exactly one tile and no entities for
-   the mod to recognize it.
-
-![Select the landfill tile](doc/select-landfill-tile.png)
-
-3. Press "Create blueprint" to finish creating it.  You can give the
-   blueprint a name if you want, but the mod does not care about its
-   name.
-
-![Set up new blueprint](doc/set-up-new-blueprint.png)
-
-4. With the new blueprint still on your mouse cursor, press B to open
-   the blueprint library, then click on the "Game blueprints" tab.
-
-![Game blueprints](doc/game-blueprints.png)
-
-5. Click in any open square to place the blueprint into that tab.
-
-![Blueprint in the library](doc/blueprint-in-library.png)
-
-6. Press E to close the blueprint library.
-
-Now, approach some water, and it will be automatically marked for
-landfilling using the created blueprint.
-
-
-Landfilling cliffs
-------------------
-
-Cliffs will be automatically marked for destruction once Cliff
+Cliffs will also be automatically marked for destruction once Cliff
 Explosives have been researched.  In the Space Age expansion, that
 requires visiting another planet.  Until then, the Bulldozer Equipment
 will ignore cliffs.
