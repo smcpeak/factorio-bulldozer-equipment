@@ -115,7 +115,7 @@ local function entity_check_for_obstacles(actor_entity)
 
   local required_energy = bulldozer_equipment.max_energy / 2;
   if (bulldozer_equipment.energy < required_energy) then
-    diag(4, actor_entity_desc ..
+    diag(3, actor_entity_desc ..
             " has a bulldozer with " .. bulldozer_equipment.energy ..
             " J, but that is less than the required " .. required_energy ..
             " J, so it is not operational.");

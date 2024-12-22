@@ -21,13 +21,13 @@ providing buildable space otherwise blocked by water.
 Usage
 =====
 
-First, research Bulldozer Equipment.  Its prerequisites are
-Utility (yellow) Science and Belt Immunity Equipment.
+First, research Bulldozer Equipment.  Its main prerequisite is
+Utility (yellow) Science.
 
 Create the Bulldozer Equipment item and put it into the equipment grid
 of a player character or a vehicle.  Ensure the grid can supply the
-required 150 kW of power.  This equipment also provides the function of
-the Belt Immunity equipment, so you can remove that if you have it.
+required 50 kW of power, although this only drains while moving since
+the mod only takes effect while moving.
 
 Approach some trees or rocks.  They will be automatically marked for
 destruction.

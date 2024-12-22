@@ -5,11 +5,10 @@ local mod_name = "__BulldozerEquipment__";
 
 -- ----------------------------- Equipment -----------------------------
 -- Unfortunately, there is not a generic category of equipment.
--- Instead, one must extend one of the types in the base game.  I'm
--- following the lead of the "Extended Vanilla: Personal Equipment" mod,
--- which extends the belt immunity device.
+-- Instead, one must extend one of the types in the base game.  I use
+-- an exoskeleton with the movement bonus set to 0.
 local bulldozer_equipment = table.deepcopy(
-  data.raw["belt-immunity-equipment"]["belt-immunity-equipment"]);
+  data.raw["movement-bonus-equipment"]["exoskeleton-equipment"]);
 
 bulldozer_equipment.name = "bulldozer-equipment";
 
@@ -20,26 +19,26 @@ bulldozer_equipment.sprite = {
   priority = "medium",
 };
 
--- A bit more than the draw of ordinary belt immunity, since it
--- (unavoidably) has that function as well, but we generally don't care
--- about that during combat.
-bulldozer_equipment.energy_consumption = "150kW";
+-- Nominal energy cost.  But since this is based on exoskeleton, it
+-- only drains while moving.
+bulldozer_equipment.energy_consumption = "50kW";
 
-bulldozer_equipment.energy_source = {
-  buffer_capacity = "150kJ",
-  input_flow_limit = "240kW",
-  type = "electric",
-  usage_priority = "primary-input"
+bulldozer_equipment.movement_bonus = 0;
+
+bulldozer_equipment.shape = {
+  width = 1,
+  height = 1,
+  type = "full",
 };
 
 bulldozer_equipment.order = "b-i-b";
 
 
 -- ------------------------------- Item --------------------------------
-local bulldozer_item = table.deepcopy(data.raw.item["belt-immunity-equipment"]);
+local bulldozer_item = table.deepcopy(data.raw.item["exoskeleton-equipment"]);
 bulldozer_item.name                      = "bulldozer-equipment";
 bulldozer_item.icon                      = mod_name .. "/graphics/icons/bulldozer.png";
-bulldozer_item.order                     = "c[belt-immunity]-a[bulldozer]";
+bulldozer_item.order                     = "c[bulldozer]";
 bulldozer_item.place_as_equipment_result = "bulldozer-equipment";
 
 
@@ -104,11 +103,17 @@ local bulldozer_technology = {
   icon = mod_name .. "/graphics/technology/bulldozer-equipment.png",
   icon_size = 64,
 
-  -- It seems like this is a sort of "utility" function, so perhaps it
-  -- makes sense to put it behind utility (yellow) science.
   prerequisites = {
+    -- It seems like this is a sort of "utility" function, and a
+    -- somewhat advanced capability, so perhaps it makes sense to put it
+    -- behind utility (yellow) science.
     "utility-science-pack",
-    "belt-immunity-equipment",
+
+    -- Exoskeleton has this prerequisite, so I will too.
+    "solar-panel-equipment",
+
+    -- Ensure the radar item is researched.
+    "radar",
   },
 
   unit = {
