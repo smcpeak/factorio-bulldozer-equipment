@@ -2,6 +2,7 @@
 -- Configuration settings.
 
 data:extend({
+  -- ------------------------- Global settings -------------------------
   -- Diagnostic log verbosity level.  See `diagnostic_verbosity` in
   -- control.lua.
   {
@@ -33,11 +34,20 @@ data:extend({
     maximum_value = 3600,
   },
 
+  -- ----------------------- Per-player settings -----------------------
+  -- Whether to do anything for this player.
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-enable-for-player",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+
   -- Maximum distance to a "nearby" obstacle entity.
   {
     type = "int-setting",
     name = "bulldozer-equipment-obstacle-entity-radius",
-    setting_type = "runtime-global",
+    setting_type = "runtime-per-user",
     default_value = 16,
     minimum_value = 1,
     maximum_value = 100,
@@ -47,7 +57,7 @@ data:extend({
   {
     type = "int-setting",
     name = "bulldozer-equipment-obstacle-tile-radius",
-    setting_type = "runtime-global",
+    setting_type = "runtime-per-user",
     default_value = 8,
     minimum_value = 1,
     maximum_value = 100,
@@ -57,7 +67,7 @@ data:extend({
   {
     type = "bool-setting",
     name = "bulldozer-equipment-want-remove-trees",
-    setting_type = "runtime-global",
+    setting_type = "runtime-per-user",
     default_value = true,
   },
 
@@ -65,7 +75,7 @@ data:extend({
   {
     type = "bool-setting",
     name = "bulldozer-equipment-want-remove-rocks",
-    setting_type = "runtime-global",
+    setting_type = "runtime-per-user",
     default_value = true,
   },
 
@@ -73,7 +83,7 @@ data:extend({
   {
     type = "bool-setting",
     name = "bulldozer-equipment-want-remove-cliffs",
-    setting_type = "runtime-global",
+    setting_type = "runtime-per-user",
     default_value = true,
   },
 
@@ -81,14 +91,6 @@ data:extend({
   {
     type = "bool-setting",
     name = "bulldozer-equipment-want-remove-water",
-    setting_type = "runtime-global",
-    default_value = true,
-  },
-
-  -- Whether to do anything for this player.
-  {
-    type = "bool-setting",
-    name = "bulldozer-equipment-enable-for-player",
     setting_type = "runtime-per-user",
     default_value = true,
   },

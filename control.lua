@@ -23,24 +23,32 @@ local obstacle_check_period_ticks = 15;
 -- Time between landfill creation operations, in ticks.  0 disables.
 local landfill_creation_period_ticks = 60;
 
--- Maximum distance to a "nearby" obstacle entity, in game grid units.
-local obstacle_entity_radius = 16;
+-- Map from player_index to that player's preferences, which is a table
+-- containing:
+--[[
+  -- True if the mod is generally enabled.
+  bool enabled = true;
 
--- Maximum distance to a "nearby" obstacle tile, in game grid units.
---
--- This is different from the entity radius because, in playtesting, the
--- larger radius seems excessive and obnoxious for tiles, while the
--- smaller radius is not big enough for rocks and trees.  In part, that
--- relates to the much bigger investment in time and resources required
--- to clear obstacle tiles versus obstacle entities.
---
-local obstacle_tile_radius = 8;
+  -- Maximum distance to a "nearby" obstacle entity, in game grid units.
+  int obstacle_entity_radius = 16;
 
--- Whether to clear each specific obstacle.
-local want_remove_trees = true;
-local want_remove_rocks = true;
-local want_remove_cliffs = true;
-local want_remove_water = true;
+  -- Maximum distance to a "nearby" obstacle tile, in game grid units.
+  --
+  -- This is different from the entity radius because, in playtesting, the
+  -- larger radius seems excessive and obnoxious for tiles, while the
+  -- smaller radius is not big enough for rocks and trees.  In part, that
+  -- relates to the much bigger investment in time and resources required
+  -- to clear obstacle tiles versus obstacle entities.
+  --
+  int obstacle_tile_radius = 8;
+
+  -- Whether to clear each specific obstacle.
+  bool want_remove_trees = true;
+  bool want_remove_rocks = true;
+  bool want_remove_cliffs = true;
+  bool want_remove_water = true;
+--]]
+local player_index_to_prefs = {};
 
 
 -- --------------------------- Runtime data ----------------------------
@@ -82,23 +90,89 @@ local function pos_str(pos)
 end;
 
 
+-- Get the player index associated with entity 'e', or -1 if this
+-- entity is not associated with a player.
+local function player_index_of_entity(e)
+  if (e.type == 'car') then
+    -- Vehicle.
+    --
+    -- Normally vehicles always have a last_user, but with mods it is
+    -- evidently possible for last_user to be nil:
+    -- https://mods.factorio.com/mod/RoboTank/discussion/5cb114b4a07570000cfc3762
+    if (e.last_user == nil) then
+      return -1;
+    else
+      return e.last_user.index;
+    end;
+  elseif (e.type == 'character') then
+    -- Character.
+    if (e.player ~= nil) then
+      return e.player.index;
+    else
+      return -1;
+    end;
+  else
+    return -1;
+  end;
+end;
+
+
 -- ------------------------ Mod-specific logic -------------------------
--- True if `actor_entity` has the bulldozer equipment installed and it
--- has sufficient power.
-local function entity_has_bulldozer(actor_entity)
+-- Return a table containing the preferences for `player_index`.
+local function get_player_index_prefs(player_index)
+  local ret = player_index_to_prefs[player_index];
+  if (ret) then
+    return ret;
+  end;
+
+  -- Must re-read from the API.
+  local player_settings = settings.get_player_settings(player_index);
+  ret = {
+    enabled                = player_settings["bulldozer-equipment-enable-for-player"].value,
+    obstacle_entity_radius = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
+    obstacle_tile_radius   = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
+    want_remove_trees      = player_settings["bulldozer-equipment-want-remove-trees"].value,
+    want_remove_rocks      = player_settings["bulldozer-equipment-want-remove-rocks"].value,
+    want_remove_cliffs     = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
+    want_remove_water      = player_settings["bulldozer-equipment-want-remove-water"].value,
+  };
+  diag(4, "Player " .. player_index ..
+          " has settings: " .. serpent.line(ret));
+
+  player_index_to_prefs[player_index] = ret;
+  return ret;
+end;
+
+
+-- If `actor_entity` has the bulldozer equipment installed and it has
+-- sufficient power, etc., return the preferences to use.  Otherwise
+-- return nil and log a reason for it not being available.
+local function entity_bulldozer_prefs(actor_entity)
   local actor_entity_desc =
     actor_entity.name .. " " .. actor_entity.unit_number;
+
+  local player_index = player_index_of_entity(actor_entity);
+  if (player_index < 0) then
+    diag(4, actor_entity_desc .. " is not associated with a player.");
+    return nil;
+  end;
+
+  local prefs = get_player_index_prefs(player_index);
+  if (not prefs.enabled) then
+    diag(5, actor_entity_desc .. " has the mod disabled.");
+    return nil;
+  end;
 
   local equipment_grid = actor_entity.grid;
   if (equipment_grid == nil) then
     diag(5, actor_entity_desc .. " has no equipment grid.");
-    return false;
+    return nil;
   end;
 
   local bulldozer_equipment = equipment_grid.find("bulldozer-equipment");
   if (bulldozer_equipment == nil) then
     diag(5, actor_entity_desc .. " does not have a bulldozer.");
-    return false;
+    return nil;
   end;
 
   local required_energy = bulldozer_equipment.max_energy / 2;
@@ -107,35 +181,34 @@ local function entity_has_bulldozer(actor_entity)
             " has a bulldozer with " .. bulldozer_equipment.energy ..
             " J, but that is less than the required " .. required_energy ..
             " J, so it is not operational.");
-    return false;
+    return nil;
   end;
 
-  return true;
+  return prefs;
 end;
 
 
 -- Scan near one entity for natural obstacles if it has the necessary
 -- equipment.
-local function entity_check_for_obstacles(actor_entity)
-  if (not entity_has_bulldozer(actor_entity)) then
-    return;
-  end;
-
+local function entity_check_for_obstacles(actor_entity, prefs)
   local actor_entity_desc =
     actor_entity.name .. " " .. actor_entity.unit_number;
 
   local force = actor_entity.force;
   local surface = actor_entity.surface;
 
-  local include_cliffs = want_remove_cliffs and force.cliff_deconstruction_enabled;
-  if (want_remove_trees or
-      want_remove_rocks or
+  local include_cliffs =
+    prefs.want_remove_cliffs and
+    force.cliff_deconstruction_enabled;
+
+  if (prefs.want_remove_trees or
+      prefs.want_remove_rocks or
       include_cliffs) then
     local types = {};
-    if (want_remove_trees) then
+    if (prefs.want_remove_trees) then
       table.insert(types, "tree");
     end;
-    if (want_remove_rocks) then
+    if (prefs.want_remove_rocks) then
       table.insert(types, "simple-entity");
     end;
     if (include_cliffs) then
@@ -143,11 +216,13 @@ local function entity_check_for_obstacles(actor_entity)
     end;
 
     diag(5, actor_entity_desc ..
-            ": Scanning area within " .. obstacle_entity_radius ..
+            ": Scanning area within " .. prefs.obstacle_entity_radius ..
             " units of " .. pos_str(actor_entity.position) ..
             " for obstacle entities: " .. serpent.line(types));
 
-    local area = bounding_box_with_radius(actor_entity.position, obstacle_entity_radius);
+    local area = bounding_box_with_radius(
+      actor_entity.position,
+      prefs.obstacle_entity_radius);
 
     local obstacle_entities = surface.find_entities_filtered{
       area = area,
@@ -184,13 +259,15 @@ local function entity_check_for_obstacles(actor_entity)
     end;
   end;
 
-  if (want_remove_water) then
+  if (prefs.want_remove_water) then
     diag(5, actor_entity_desc ..
-            ": Scanning area within " .. obstacle_tile_radius ..
+            ": Scanning area within " .. prefs.obstacle_tile_radius ..
             " units of " .. pos_str(actor_entity.position) ..
             " for obstacle tiles.");
 
-    area = bounding_box_with_radius(actor_entity.position, obstacle_tile_radius);
+    area = bounding_box_with_radius(
+      actor_entity.position,
+      prefs.obstacle_tile_radius);
 
     local tiles = surface.find_tiles_filtered{
       area = area,
@@ -254,20 +331,21 @@ local function player_moved_recently(
 end;
 
 
--- True if `player` meets all the requirements for the bulldozer to
--- function.
-local function player_bulldozer_enabled(player)
-  if (not settings.get_player_settings(player.index)["bulldozer-equipment-enable-for-player"].value) then
-    diag(5, "Player " .. player.index .. " has disabled the mod.");
-    return false;
-  end;
-
+-- If `player` meets all the requirements for the bulldozer to function,
+-- return their prefs.  Otherwise return nil and log a reason.
+local function player_bulldozer_prefs(player)
   if (player.character == nil) then
     diag(5, "Player " .. player.index .. " has no character.");
-    return false;
+    return nil;
   end;
 
-  return entity_has_bulldozer(player.character);
+  local prefs = entity_bulldozer_prefs(player.character);
+  if (not prefs) then
+    -- The reason has already been logged.
+    return nil;
+  end;
+
+  return prefs;
 end;
 
 
@@ -279,11 +357,12 @@ local function player_check_for_obstacles(player, cur_tick)
     return false;
   end;
 
-  if (not player_bulldozer_enabled(player)) then
+  local prefs = player_bulldozer_prefs(player);
+  if (not prefs) then
     return;
   end;
 
-  entity_check_for_obstacles(player.character);
+  entity_check_for_obstacles(player.character, prefs);
 end;
 
 
@@ -297,7 +376,13 @@ end;
 
 -- Scan near one vehicle.
 local function vehicle_check_for_obstacles(vehicle)
-  entity_check_for_obstacles(vehicle);
+  local prefs = entity_bulldozer_prefs(vehicle);
+  if (not prefs) then
+    -- The reason has already been logged.
+    return nil;
+  end;
+
+  entity_check_for_obstacles(vehicle, prefs);
 end;
 
 
@@ -436,7 +521,7 @@ end;
 -- Possibly create landfill for one player.
 local function player_create_landfill(player)
   -- Among other things, ensure the player has a character.
-  if (not player_bulldozer_enabled(player)) then
+  if (not player_bulldozer_prefs(player)) then
     return;
   end;
 
@@ -456,7 +541,7 @@ end;
 
 -- Possibly create landfill for one vehicle.
 local function vehicle_create_landfill(vehicle)
-  if (not entity_has_bulldozer(vehicle)) then
+  if (not entity_bulldozer_prefs(vehicle)) then
     return;
   end;
 
@@ -527,12 +612,6 @@ local function read_configuration_settings()
   diagnostic_verbosity           = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
   obstacle_check_period_ticks    = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
   landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;
-  obstacle_entity_radius         = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
-  obstacle_tile_radius           = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
-  want_remove_trees              = settings.global["bulldozer-equipment-want-remove-trees"].value;
-  want_remove_rocks              = settings.global["bulldozer-equipment-want-remove-rocks"].value;
-  want_remove_cliffs             = settings.global["bulldozer-equipment-want-remove-cliffs"].value;
-  want_remove_water              = settings.global["bulldozer-equipment-want-remove-water"].value;
 
   -- Re-establish the tick handlers with the new periods.
   if (obstacle_check_period_ticks == landfill_creation_period_ticks) then
@@ -553,6 +632,9 @@ local function read_configuration_settings()
       on_landfill_creation_tick);
 
   end;
+
+  -- Force per-player settings to be refreshed on demand.
+  player_index_to_prefs = {};
 
   diag(4, "read_configuration_settings end");
 end;

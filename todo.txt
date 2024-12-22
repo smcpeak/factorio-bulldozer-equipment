@@ -1,7 +1,7 @@
 Bulldozer Equipment TODO
 ========================
 
-Make per-player options affect vehicles?
+Separate per-player preference for landfill creation.
 
 
 EOF
