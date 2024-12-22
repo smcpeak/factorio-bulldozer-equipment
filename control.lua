@@ -20,6 +20,9 @@ local diagnostic_verbosity = 1;
 -- Time between checks for nearby obstacles, in ticks.
 local obstacle_check_period_ticks = 15;
 
+-- Time between landfill creation operations, in ticks.
+local landfill_creation_period_ticks = 60;
+
 -- Maximum distance to a "nearby" obstacle entity, in game grid units.
 local obstacle_entity_radius = 16;
 
@@ -74,22 +77,22 @@ end;
 
 
 -- ------------------------ Mod-specific logic -------------------------
--- Scan near one entity for natural obstacles if it has the necessary
--- equipment.
-local function entity_check_for_obstacles(actor_entity)
+-- True if `actor_entity` has the bulldozer equipment installed and it
+-- has sufficient power.
+local function entity_has_bulldozer(actor_entity)
   local actor_entity_desc =
     actor_entity.name .. " " .. actor_entity.unit_number;
 
   local equipment_grid = actor_entity.grid;
   if (equipment_grid == nil) then
     diag(5, actor_entity_desc .. " has no equipment grid.");
-    return;
+    return false;
   end;
 
   local bulldozer_equipment = equipment_grid.find("bulldozer-equipment");
   if (bulldozer_equipment == nil) then
     diag(5, actor_entity_desc .. " does not have a bulldozer.");
-    return;
+    return false;
   end;
 
   local required_energy = bulldozer_equipment.max_energy / 2;
@@ -98,8 +101,22 @@ local function entity_check_for_obstacles(actor_entity)
             " has a bulldozer with " .. bulldozer_equipment.energy ..
             " J, but that is less than the required " .. required_energy ..
             " J, so it is not operational.");
+    return false;
+  end;
+
+  return true;
+end;
+
+
+-- Scan near one entity for natural obstacles if it has the necessary
+-- equipment.
+local function entity_check_for_obstacles(actor_entity)
+  if (not entity_has_bulldozer(actor_entity)) then
     return;
   end;
+
+  local actor_entity_desc =
+    actor_entity.name .. " " .. actor_entity.unit_number;
 
   local force = actor_entity.force;
   local include_cliffs = force.cliff_deconstruction_enabled;
@@ -181,19 +198,27 @@ local function entity_check_for_obstacles(actor_entity)
 end;
 
 
--- Scan near one player.
-local function player_check_for_obstacles(player, cur_tick)
+-- True if `player` has moved within the past `action_period_ticks`,
+-- given that it is `cur_tick`.  `action` is a string describing what
+-- we do periodically.
+local function player_moved_recently(
+  player,
+  cur_tick,
+  action_period_ticks,
+  action)
+
   local moved_tick = player_index_to_last_move_tick[player.index];
   if (moved_tick == nil) then
     --[[
     diag(5, "Player " .. player.index ..
-            " has not moved since the mod was loaded, skipping.");
+            " has not moved since the mod was loaded, skipping " ..
+            action .. ".");
     --]]
-    return;
+    return false;
   end;
 
   local ticks_since_moved = cur_tick - moved_tick;
-  if (ticks_since_moved > obstacle_check_period_ticks) then
+  if (ticks_since_moved > action_period_ticks) then
     -- Normally commented-out since this is the usual case and the
     -- whole point is optimization.
     --[[
@@ -201,20 +226,43 @@ local function player_check_for_obstacles(player, cur_tick)
             " last moved on tick " .. moved_tick ..
             ", but it is now tick " .. cur_tick ..
             ", which is " .. ticks_since_moved .. " elapsed ticks, " ..
-            "which is greater than the current obstacle check period of " ..
-            obstacle_check_period_ticks ..
+            "which is greater than the current " .. action ..
+            " period of " .. action_period_ticks ..
             ", so skipping this player.");
     --]]
-    return;
+    return false;
   end;
 
+  return true;
+end;
+
+
+-- True if `player` meets all the requirements for the bulldozer to
+-- function.
+local function player_bulldozer_enabled(player)
   if (not settings.get_player_settings(player.index)["bulldozer-equipment-enable-for-player"].value) then
     diag(5, "Player " .. player.index .. " has disabled the mod.");
-    return;
+    return false;
   end;
 
   if (player.character == nil) then
     diag(5, "Player " .. player.index .. " has no character.");
+    return false;
+  end;
+
+  return entity_has_bulldozer(player.character);
+end;
+
+
+-- Scan near one player.
+local function player_check_for_obstacles(player, cur_tick)
+  if (not player_moved_recently(player, cur_tick,
+                                obstacle_check_period_ticks,
+                                "obstacle check")) then
+    return false;
+  end;
+
+  if (not player_bulldozer_enabled(player)) then
     return;
   end;
 
@@ -244,11 +292,155 @@ local function all_vehicles_check_for_obstacles()
 end;
 
 
+-- Description of what we insert when we successfully convert items to
+-- landfill.
+local one_item_landfill_stack = {
+  name = "landfill",
+  count = 1,
+};
+
+
+-- Try to create landfill by converting `num_input_items_required` of
+-- `input_item_name` to one landfill item.  Return true if we were able
+-- to convert and insert.
+local function create_landfill_from_item(
+  situation,                 -- string: What we are doing.
+  source_inv,                -- LuaInventory to take from.
+  dest_inv,                  -- LuaInventory to insert into
+  input_item_name,           -- string: The name of the item to convert.
+  num_input_items_required   -- int: Number of items to convert.
+)
+  local num_input_items = source_inv.get_item_count(input_item_name);
+  if (num_input_items >= num_input_items_required) then
+    local num_removed = source_inv.remove{
+      name = input_item_name,
+      count = num_input_items_required,
+    };
+    if (num_removed ~= num_input_items_required) then
+      diag(1, situation ..
+              ": The attempt to remove " .. num_input_items_required ..
+              " " .. input_item_name ..
+              "failed!  The actual number removed was " .. num_removed ..
+              ".  The removed items will simply be lost.");
+      return false;
+    end;
+
+    local num_inserted = dest_inv.insert(one_item_landfill_stack);
+    if (num_inserted ~= 1) then
+      diag(1, situation .. ": The attempt to insert one landfill failed!  " ..
+              "The actual number inserted was " .. num_inserted ..
+              ".  The removed items will simply be lost.");
+      return false;
+    end;
+
+    diag(3, situation .. ": Successfully removed " ..
+            num_input_items_required .. " " .. input_item_name ..
+            " and inserted one landfill.");
+    return true;
+
+  elseif (num_input_items > 0) then
+    diag(5, situation .. ": The inventory contains " .. num_input_items ..
+            " " .. input_item_name ..
+            ", but that is less than the required " .. num_input_items_required ..
+            ", so they will be ignored.");
+    return false;
+
+  end;
+
+  -- No items of the indicated kind.
+  return false;
+end;
+
+
+-- Try to create a landfill item by taking items from `source_inv`.  Put
+-- the resulting item into `dest_inv`.  Return true if one landfill item
+-- was successfully converted.
+local function create_landfill(situation, source_inv, dest_inv)
+  if (not dest_inv.can_insert(one_item_landfill_stack)) then
+    diag(2, situation .. ": No space in destination inventory.");
+    return false;
+  end;
+
+  if (create_landfill_from_item(situation, source_inv, dest_inv,
+                                "stone", 50)) then
+    return true;
+  end;
+
+  if (create_landfill_from_item(situation, source_inv, dest_inv,
+                                "wood", 100)) then
+    return true;
+  end;
+
+  if (create_landfill_from_item(situation, source_inv, dest_inv,
+                                "coal", 50)) then
+    return true;
+  end;
+
+  diag(5, situation .. ": No items to convert to landfill.");
+  return false;
+end;
+
+
+-- Possibly create landfill for one player.
+local function player_create_landfill(player)
+  if (not player_bulldozer_enabled(player)) then
+    return;
+  end;
+
+  -- If the above check succeeds, the player has a character.
+  local main_inv = player.character.get_inventory(defines.inventory.character_main);
+  if (not main_inv) then
+    diag(4, "Player " .. player.index ..
+            " does not have a main inventory.");
+    return;
+  end;
+
+  local situation =
+    "Player " .. player.index ..
+    " creating landfill in main inventory";
+  if (create_landfill(situation, main_inv, main_inv)) then
+    return;
+  end;
+end;
+
+
+-- Possibly create landfill for all players.
+local function all_players_create_landfill()
+  for _, player in pairs(game.players) do
+    player_create_landfill(player);
+  end;
+end;
+
+
+-- Possibly create landfill for one vehicle.
+local function vehicle_create_landfill(vehicle)
+  -- TODO
+
+
+
+
+end;
+
+
+-- Possibly create landfill for all vehicles that are moving.
+local function all_vehicles_create_landfill()
+  for _, vehicle in pairs(game.get_vehicles{is_moving=true}) do
+    vehicle_create_landfill(vehicle);
+  end;
+end;
+
 
 -- Called for the obstacle check tick handler.
 local function on_obstacle_check_tick(event)
   all_players_check_for_obstacles(event.tick);
   all_vehicles_check_for_obstacles();
+end;
+
+
+-- Called for the landfill creation tick handler.
+local function on_landfill_creation_tick(event)
+  all_players_create_landfill();
+  all_vehicles_create_landfill();
 end;
 
 
@@ -270,9 +462,11 @@ local function read_configuration_settings()
   obstacle_entity_radius      = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
   obstacle_tile_radius        = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
 
-  -- Re-establish the tick handler with the new period.
+  -- Re-establish the tick handlers with the new periods.
   script.on_nth_tick(obstacle_check_period_ticks,
     on_obstacle_check_tick);
+  script.on_nth_tick(landfill_creation_period_ticks,
+    on_landfill_creation_tick);
 
   diag(4, "read_configuration_settings end");
 end;
