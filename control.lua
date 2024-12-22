@@ -18,7 +18,7 @@
 local diagnostic_verbosity = 1;
 
 -- Time between checks for nearby obstacles, in ticks.
-local check_period_ticks = 15;
+local obstacle_check_period_ticks = 15;
 
 -- Maximum distance to a "nearby" obstacle entity, in game grid units.
 local obstacle_entity_radius = 16;
@@ -193,7 +193,7 @@ local function player_check_for_obstacles(player, cur_tick)
   end;
 
   local ticks_since_moved = cur_tick - moved_tick;
-  if (ticks_since_moved > check_period_ticks) then
+  if (ticks_since_moved > obstacle_check_period_ticks) then
     -- Normally commented-out since this is the usual case and the
     -- whole point is optimization.
     --[[
@@ -201,7 +201,8 @@ local function player_check_for_obstacles(player, cur_tick)
             " last moved on tick " .. moved_tick ..
             ", but it is now tick " .. cur_tick ..
             ", which is " .. ticks_since_moved .. " elapsed ticks, " ..
-            "which is greater than the current check period of " .. check_period_ticks ..
+            "which is greater than the current obstacle check period of " ..
+            obstacle_check_period_ticks ..
             ", so skipping this player.");
     --]]
     return;
@@ -243,6 +244,14 @@ local function all_vehicles_check_for_obstacles()
 end;
 
 
+
+-- Called for the obstacle check tick handler.
+local function on_obstacle_check_tick(event)
+  all_players_check_for_obstacles(event.tick);
+  all_vehicles_check_for_obstacles();
+end;
+
+
 -- Re-read the configuration settings.
 --
 -- Below, this is done once on startup, then afterward in response to
@@ -256,16 +265,14 @@ local function read_configuration_settings()
   -- Clear any existing tick handlers.
   script.on_nth_tick(nil);
 
-  diagnostic_verbosity   = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
-  check_period_ticks     = settings.global["bulldozer-equipment-check-period-ticks"].value;
-  obstacle_entity_radius = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
-  obstacle_tile_radius   = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
+  diagnostic_verbosity        = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
+  obstacle_check_period_ticks = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
+  obstacle_entity_radius      = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
+  obstacle_tile_radius        = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
 
   -- Re-establish the tick handler with the new period.
-  script.on_nth_tick(check_period_ticks, function(e)
-    all_players_check_for_obstacles(e.tick);
-    all_vehicles_check_for_obstacles();
-  end);
+  script.on_nth_tick(obstacle_check_period_ticks,
+    on_obstacle_check_tick);
 
   diag(4, "read_configuration_settings end");
 end;

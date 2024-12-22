@@ -16,7 +16,7 @@ data:extend({
   -- Time between checks for nearby obstacles.
   {
     type = "int-setting",
-    name = "bulldozer-equipment-check-period-ticks",
+    name = "bulldozer-equipment-obstacle-check-period-ticks",
     setting_type = "runtime-global",
     default_value = 15,
     minimum_value = 1,
