@@ -17,10 +17,10 @@
 --      happen periodically regardless of anything else.
 local diagnostic_verbosity = 1;
 
--- Time between checks for nearby obstacles, in ticks.
+-- Time between checks for nearby obstacles, in ticks.  0 disables.
 local obstacle_check_period_ticks = 15;
 
--- Time between landfill creation operations, in ticks.
+-- Time between landfill creation operations, in ticks.  0 disables.
 local landfill_creation_period_ticks = 60;
 
 -- Maximum distance to a "nearby" obstacle entity, in game grid units.
@@ -381,26 +381,51 @@ local function create_landfill(situation, source_inv, dest_inv)
 end;
 
 
+-- Possibly create landfill for one entity.
+local function entity_create_landfill(
+  entity,
+  main_inv_id,
+  trash_inv_id
+)
+  local entity_desc = entity.name .. " " .. entity.unit_number;
+
+  local main_inv = entity.get_inventory(main_inv_id);
+  if (not main_inv) then
+    diag(4, entity_desc .. " does not have a main inventory.");
+    return;
+  end;
+
+  -- Try converting from trash first.
+  local trash_inv = entity.get_inventory(trash_inv_id);
+  if (not trash_inv) then
+    diag(4, entity_desc .. " does not have a trash inventory.");
+  else
+    local situation =
+      entity_desc .. " creating landfill from trash inventory";
+    if (create_landfill(situation, trash_inv, main_inv)) then
+      return;
+    end;
+  end;
+
+  -- Then convert from the main inventory.
+  local situation =
+    entity_desc .. " creating landfill from main inventory";
+  if (create_landfill(situation, main_inv, main_inv)) then
+    return;
+  end;
+end;
+
+
 -- Possibly create landfill for one player.
 local function player_create_landfill(player)
+  -- Among other things, ensure the player has a character.
   if (not player_bulldozer_enabled(player)) then
     return;
   end;
 
-  -- If the above check succeeds, the player has a character.
-  local main_inv = player.character.get_inventory(defines.inventory.character_main);
-  if (not main_inv) then
-    diag(4, "Player " .. player.index ..
-            " does not have a main inventory.");
-    return;
-  end;
-
-  local situation =
-    "Player " .. player.index ..
-    " creating landfill in main inventory";
-  if (create_landfill(situation, main_inv, main_inv)) then
-    return;
-  end;
+  entity_create_landfill(player.character,
+    defines.inventory.character_main,
+    defines.inventory.character_trash);
 end;
 
 
@@ -414,11 +439,21 @@ end;
 
 -- Possibly create landfill for one vehicle.
 local function vehicle_create_landfill(vehicle)
-  -- TODO
+  if (not entity_has_bulldozer(vehicle)) then
+    return;
+  end;
 
-
-
-
+  -- Note: There is no inventory define for `car_trash`, but it appears
+  -- that the tank at least follows the same pattern of values as the
+  -- spider, so we can use `spider_trash` (which has value 4) to get the
+  -- tank trash inventory.
+  --
+  -- Submitted a feature request to add `car_trash`:
+  -- https://forums.factorio.com/viewtopic.php?f=6&t=124950
+  --
+  entity_create_landfill(vehicle,
+    defines.inventory.car_trunk,
+    defines.inventory.spider_trash);
 end;
 
 
@@ -444,6 +479,21 @@ local function on_landfill_creation_tick(event)
 end;
 
 
+-- If `period_ticks` is non-zero, register `handler`.
+local function possibly_register_nth_tick_handler(period_ticks, action, handler)
+  if (period_ticks == 0) then
+    diag(4, "Tick handler for " .. action .. " is disabled.");
+
+  else
+    diag(4, "Tick handler for " .. action ..
+            " is set to run every " .. period_ticks ..
+            " ticks.");
+    script.on_nth_tick(period_ticks, handler);
+
+  end;
+end;
+
+
 -- Re-read the configuration settings.
 --
 -- Below, this is done once on startup, then afterward in response to
@@ -457,16 +507,31 @@ local function read_configuration_settings()
   -- Clear any existing tick handlers.
   script.on_nth_tick(nil);
 
-  diagnostic_verbosity        = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
-  obstacle_check_period_ticks = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
-  obstacle_entity_radius      = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
-  obstacle_tile_radius        = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
+  diagnostic_verbosity           = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
+  obstacle_check_period_ticks    = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
+  landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;
+  obstacle_entity_radius         = settings.global["bulldozer-equipment-obstacle-entity-radius"].value;
+  obstacle_tile_radius           = settings.global["bulldozer-equipment-obstacle-tile-radius"].value;
 
   -- Re-establish the tick handlers with the new periods.
-  script.on_nth_tick(obstacle_check_period_ticks,
-    on_obstacle_check_tick);
-  script.on_nth_tick(landfill_creation_period_ticks,
-    on_landfill_creation_tick);
+  if (obstacle_check_period_ticks == landfill_creation_period_ticks) then
+    possibly_register_nth_tick_handler(obstacle_check_period_ticks,
+      "both",
+      function(e)
+        on_obstacle_check_tick(e);
+        on_landfill_creation_tick(e);
+      end);
+
+  else
+    possibly_register_nth_tick_handler(obstacle_check_period_ticks,
+      "obstacle check",
+      on_obstacle_check_tick);
+
+    possibly_register_nth_tick_handler(landfill_creation_period_ticks,
+      "landfill creation",
+      on_landfill_creation_tick);
+
+  end;
 
   diag(4, "read_configuration_settings end");
 end;

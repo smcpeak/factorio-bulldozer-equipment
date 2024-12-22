@@ -14,8 +14,14 @@ both.  It allows the formation to roll though virtually any obstacle,
 provided it has enough resources (cliff explosives and landfill), free
 space to store the trash, and armor and armament to deal with hostiles.
 
-It is also useful out of combat, conveniently clearing obstacles and
-providing buildable space otherwise blocked by water.
+Among other things, this equipment allows attacking while moving south
+with a RoboTank squad, which is otherwise nearly impossible to due the
+compressed screen size in that direction and the toolbars blocking
+access to the world in that direction.
+
+As a secondary function, the bulldozer equipment automatically converts
+all wood, coal, and stone in the main or trash inventories into landfill
+at a cost of one stack per landfill.
 
 
 Usage
@@ -39,11 +45,41 @@ requires visiting another planet.  Until then, the Bulldozer Equipment
 will ignore cliffs.
 
 
+Landfill creation
+=================
+
+When the bulldozer is in a player character's equipment grid,
+periodically (by default, once per second), one stack of wood, coal, or
+stone will be turned into landfill.  When it is in a vehicle equipment
+grid, the same thing happens, but *only while the vehicle is moving*
+(this is primarily meant as a performance optimization).
+
+This feature means you don't have to stop to tediously empty all of the
+vehicles' inventories of the trash they have collected.  It also
+provides the minor benefit of supplying a little extra landfill,
+although typically far below the replacement level when doing
+significant filling of water.
+
+
+Balance considerations
+======================
+
+The basic function of ordering obstacle destruction is purely a user
+interface enhancement, so does not raise significant balance issues.
+
+Creating landfill from wood and coal is something a few other mods also
+provide.  In my games, by the time I'm dealing with behemoth biters,
+wood and coal are so worthless that I just put them into wooden boxes
+and then shoot the boxes to destroy the items (whereas I can right-click
+spam the landfill button to eliminate stone).  Having *some* use for
+wood and coal is a very minor player buff.
+
+
 Performance considerations
 ==========================
 
-For both player characters and vehicles, the mod only activates when the
-actor moves, so the cost is generally small.
+For both player characters and vehicles, the obstacle clearing function
+only activates when the actor moves, so the cost is generally small.
 
 The process of designating tiles for landfilling is somewhat slow, so if
 the mod is configured to use a large tile search radius and short period

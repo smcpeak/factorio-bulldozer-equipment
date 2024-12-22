@@ -19,8 +19,18 @@ data:extend({
     name = "bulldozer-equipment-obstacle-check-period-ticks",
     setting_type = "runtime-global",
     default_value = 15,
-    minimum_value = 1,
+    minimum_value = 0,
     maximum_value = 300,
+  },
+
+  -- Time between landfill creation operations.
+  {
+    type = "int-setting",
+    name = "bulldozer-equipment-landfill-creation-period-ticks",
+    setting_type = "runtime-global",
+    default_value = 60,
+    minimum_value = 0,
+    maximum_value = 3600,
   },
 
   -- Maximum distance to a "nearby" obstacle entity.
