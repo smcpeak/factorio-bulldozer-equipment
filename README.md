@@ -31,22 +31,22 @@ First, research Bulldozer Equipment.  Its main prerequisite is
 Utility (yellow) Science.
 
 Create the Bulldozer Equipment item and put it into the equipment grid
-of a player character or a vehicle.  Ensure the grid can supply the
-required 50 kW of power, although this only drains while moving since
-the mod only takes effect while moving.
+of a player character or a vehicle (a car or tank).  Ensure the grid can
+supply the required 50 kW of power, although this only drains while
+moving.
+
+
+Clearing obstacles
+------------------
 
 If you now approach some trees or rocks, they will be automatically
 marked for destruction, and if you approach water, it will be marked for
-landfilling.
-
-Cliffs will also be automatically marked for destruction once Cliff
-Explosives have been researched.  In the Space Age expansion, that
-requires visiting another planet.  Until then, the Bulldozer Equipment
-will ignore cliffs.
+landfilling.  Cliffs will also be automatically marked for destruction
+once Cliff Explosives have been researched.
 
 
 Landfill creation
-=================
+-----------------
 
 When the bulldozer is in a player character's equipment grid,
 periodically (by default, once per second), one stack of wood, coal, or

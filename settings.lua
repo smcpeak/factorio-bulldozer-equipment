@@ -95,10 +95,26 @@ data:extend({
     default_value = true,
   },
 
-  -- Convert trash into landfill?
+  -- Convert wood into landfill?
   {
     type = "bool-setting",
-    name = "bulldozer-equipment-want-landfill-creation",
+    name = "bulldozer-equipment-want-landfill-from-wood",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+
+  -- Convert coal into landfill?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-landfill-from-coal",
+    setting_type = "runtime-per-user",
+    default_value = true,
+  },
+
+  -- Convert stone into landfill?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-want-landfill-from-stone",
     setting_type = "runtime-per-user",
     default_value = true,
   },

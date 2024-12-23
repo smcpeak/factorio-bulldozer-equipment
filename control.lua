@@ -52,8 +52,10 @@ local landfill_creation_period_ticks = 60;
   bool want_remove_cliffs = true;
   bool want_remove_water = true;
 
-  -- Whether to create landfill.
-  bool want_landfill_creation = true;
+  -- Whether to create landfill, and from what.
+  bool want_landfill_from_wood = true;
+  bool want_landfill_from_coal = true;
+  bool want_landfill_from_stone = true;
 --]]
 local player_index_to_prefs = {};
 
@@ -608,29 +610,40 @@ end;
 -- Try to create a landfill item by taking items from `source_inv`.  Put
 -- the resulting item into `dest_inv`.  Return true if one landfill item
 -- was successfully converted.
-local function create_landfill(situation, source_inv, dest_inv)
+local function create_landfill(situation, source_inv, dest_inv, prefs)
   if (not dest_inv.can_insert(one_item_landfill_stack)) then
     diag(2, situation .. ": No space in destination inventory.");
     return false;
   end;
 
-  if (create_landfill_from_item(situation, source_inv, dest_inv,
+  if (prefs.want_landfill_from_stone and
+      create_landfill_from_item(situation, source_inv, dest_inv,
                                 "stone", 50)) then
     return true;
   end;
 
-  if (create_landfill_from_item(situation, source_inv, dest_inv,
+  if (prefs.want_landfill_from_wood and
+      create_landfill_from_item(situation, source_inv, dest_inv,
                                 "wood", 100)) then
     return true;
   end;
 
-  if (create_landfill_from_item(situation, source_inv, dest_inv,
+  if (prefs.want_landfill_from_coal and
+      create_landfill_from_item(situation, source_inv, dest_inv,
                                 "coal", 50)) then
     return true;
   end;
 
   diag(5, situation .. ": No items to convert to landfill.");
   return false;
+end;
+
+
+-- True if at least one landfill creation option is enabled.
+local function want_some_landfill(prefs)
+  return prefs.want_landfill_from_wood or
+         prefs.want_landfill_from_coal or
+         prefs.want_landfill_from_stone;
 end;
 
 
@@ -641,7 +654,7 @@ local function entity_create_landfill(
   main_inv_id,
   trash_inv_id
 )
-  if (not prefs.want_landfill_creation) then
+  if (not want_some_landfill(prefs)) then
     diag(5, entity_desc(entity) .. " has landfill creation disabled.");
     return;
   end;
@@ -659,7 +672,7 @@ local function entity_create_landfill(
   else
     local situation =
       entity_desc(entity) .. " creating landfill from trash inventory";
-    if (create_landfill(situation, trash_inv, main_inv)) then
+    if (create_landfill(situation, trash_inv, main_inv, prefs)) then
       return;
     end;
   end;
@@ -667,7 +680,7 @@ local function entity_create_landfill(
   -- Then convert from the main inventory.
   local situation =
     entity_desc(entity) .. " creating landfill from main inventory";
-  if (create_landfill(situation, main_inv, main_inv)) then
+  if (create_landfill(situation, main_inv, main_inv, prefs)) then
     return;
   end;
 end;
@@ -725,14 +738,16 @@ get_player_index_prefs = function(player_index)
   -- Must re-read from the API.  The docs imply this cannot return nil.
   local player_settings = settings.get_player_settings(player_index);
   ret = {
-    enabled                = player_settings["bulldozer-equipment-enable-for-player"].value,
-    obstacle_entity_radius = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
-    obstacle_tile_radius   = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
-    want_remove_trees      = player_settings["bulldozer-equipment-want-remove-trees"].value,
-    want_remove_rocks      = player_settings["bulldozer-equipment-want-remove-rocks"].value,
-    want_remove_cliffs     = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
-    want_remove_water      = player_settings["bulldozer-equipment-want-remove-water"].value,
-    want_landfill_creation = player_settings["bulldozer-equipment-want-landfill-creation"].value,
+    enabled                  = player_settings["bulldozer-equipment-enable-for-player"].value,
+    obstacle_entity_radius   = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
+    obstacle_tile_radius     = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
+    want_remove_trees        = player_settings["bulldozer-equipment-want-remove-trees"].value,
+    want_remove_rocks        = player_settings["bulldozer-equipment-want-remove-rocks"].value,
+    want_remove_cliffs       = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
+    want_remove_water        = player_settings["bulldozer-equipment-want-remove-water"].value,
+    want_landfill_from_wood  = player_settings["bulldozer-equipment-want-landfill-from-wood"].value,
+    want_landfill_from_coal  = player_settings["bulldozer-equipment-want-landfill-from-coal"].value,
+    want_landfill_from_stone = player_settings["bulldozer-equipment-want-landfill-from-stone"].value,
   };
   diag(4, "Player " .. player_index ..
           " has settings: " .. serpent.line(ret));
