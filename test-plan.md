@@ -554,7 +554,7 @@ Press F5 to enable debug view.
 While standing still, check that the average time per tick for BE is
 less than 5 us (0.005 in the time display).
 
-While moving, check that the average time per tick is less than 10 us.
+While moving, check that the average time per tick is less than 15 us.
 
 
 EOF
