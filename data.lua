@@ -13,7 +13,7 @@ local bulldozer_equipment = table.deepcopy(
 bulldozer_equipment.name = "bulldozer-equipment";
 
 bulldozer_equipment.sprite = {
-  filename = mod_name .. "/graphics/equipment/bulldozer.png",
+  filename = mod_name .. "/thumbnail.png",
   width = 64,
   height = 64,
   priority = "medium",
@@ -37,7 +37,7 @@ bulldozer_equipment.order = "b-i-b";
 -- ------------------------------- Item --------------------------------
 local bulldozer_item = table.deepcopy(data.raw.item["exoskeleton-equipment"]);
 bulldozer_item.name                      = "bulldozer-equipment";
-bulldozer_item.icon                      = mod_name .. "/graphics/icons/bulldozer.png";
+bulldozer_item.icon                      = mod_name .. "/thumbnail.png";
 bulldozer_item.order                     = "c[bulldozer]";
 bulldozer_item.place_as_equipment_result = "bulldozer-equipment";
 
@@ -100,7 +100,7 @@ local bulldozer_technology = {
       recipe = "bulldozer-equipment",
     },
   },
-  icon = mod_name .. "/graphics/technology/bulldozer-equipment.png",
+  icon = mod_name .. "/thumbnail.png",
   icon_size = 64,
 
   prerequisites = {
