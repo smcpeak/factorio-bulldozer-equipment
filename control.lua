@@ -184,7 +184,7 @@ local function entity_bulldozer_prefs(entity)
 
   local prefs = get_player_index_prefs(player_index);
   if (not prefs.enabled) then
-    diag(5, entity_desc(entity) .. " has the mod disabled.");
+    --diag(5, entity_desc(entity) .. " has the mod disabled.");
     return nil;
   end;
 
@@ -436,13 +436,13 @@ local function player_moved_recently(
 )
   local moved_tick = player_index_to_last_move_tick[player.index];
   if (moved_tick == nil) then
-    diag(5, "Player " .. player.index .. " is not moving.");
+    --diag(5, "Player " .. player.index .. " is not moving.");
     return false;
   end;
 
   local ticks_since_moved = cur_tick - moved_tick;
   if (ticks_since_moved > action_period_ticks) then
-    diag(5, "Player " .. player.index .. " is not moving.");
+    --diag(5, "Player " .. player.index .. " is not moving.");
     return false;
   end;
 
@@ -488,13 +488,13 @@ local function for_all_powered_enabled_equipped_entities(
 )
   maybe_initialize_unit_number_to_equipped_entity();
 
-  diag(5, "---- all enabled equipped entities: " .. action_desc .. " ----");
+  --diag(5, "---- all enabled equipped entities: " .. action_desc .. " ----");
 
   for _, entity in pairs(unit_number_to_equipped_entity) do
     if (entity.type == "car") then
       -- As an optimization, only do things with a moving vehicle.
       if (entity.speed == 0) then
-        diag(5, entity_desc(entity) .. " is not moving.");
+        --diag(5, entity_desc(entity) .. " is not moving.");
         return;
       end;
 
@@ -515,8 +515,8 @@ local function for_all_powered_enabled_equipped_entities(
         player_action(entity.player, prefs);
 
       else
-        diag(5, entity_desc(entity) .. " is a character that is " ..
-                "not associated with any player.");
+        --diag(5, entity_desc(entity) .. " is a character that is " ..
+        --        "not associated with any player.");
       end;
 
     else
