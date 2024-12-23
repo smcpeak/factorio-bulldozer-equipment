@@ -1,5 +1,7 @@
 Bulldozer Equipment TODO
 ========================
 
+Separate the options for converting wood, stone, and coal to landfill.
+
 
 EOF

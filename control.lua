@@ -6,6 +6,10 @@
 -- settings are read, but for convenience, these values are the same
 -- as the default setting values.
 
+-- If true, call the `error` function when something goes wrong, causing
+-- a crash.  I set this manually during development.
+local error_on_bug = false;
+
 -- How much to log, from among:
 --   0: Nothing.
 --   1: Only things that indicate a serious problem.  These suggest a
@@ -62,12 +66,36 @@ local landfillable_tile_names = {};
 -- For each player, the most recent tick on which they moved.
 local player_index_to_last_move_tick = {};
 
+-- Map from unit number to a LuaEntity whose equipment grid contains the
+-- bulldozer equipment installed.  This is nil until we do an initial
+-- scan.  All entities are either cars or characters.
+--
+-- TODO: Allow other kinds of vehicles too?  A concern is the
+-- applicability of the optimization that checks the speed.
+--
+local unit_number_to_equipped_entity = nil;
+
+
+-- ----------------------- Forward declarations ------------------------
+local get_player_index_prefs;
+
 
 -- ------------------------- Utility functions -------------------------
 -- Log 'str' if we are at verbosity 'v' or higher.
 local function diag(v, str)
   if (v <= diagnostic_verbosity) then
     log(str);
+  end;
+end;
+
+
+-- Called when we have encountered a condition that indicates this mod
+-- has a bug.
+local function report_bug(message)
+  diag(1, "BUG: " .. message);
+
+  if (error_on_bug) then
+    error(message);
   end;
 end;
 
@@ -90,6 +118,12 @@ end;
 -- Return a string describing a map position.
 local function pos_str(pos)
   return "(" .. pos.x .. "," .. pos.y .. ")";
+end;
+
+
+-- Return a string succinctly describing this entity.
+local function entity_desc(entity)
+  return entity.name .. " " .. entity.unit_number;
 end;
 
 
@@ -120,68 +154,81 @@ local function player_index_of_entity(e)
 end;
 
 
--- ------------------------ Mod-specific logic -------------------------
--- Return a table containing the preferences for `player_index`.
-local function get_player_index_prefs(player_index)
-  local ret = player_index_to_prefs[player_index];
-  if (ret) then
-    return ret;
+-- If `period_ticks` is non-zero, register `handler`.
+local function possibly_register_nth_tick_handler(period_ticks, action, handler)
+  if (period_ticks == 0) then
+    diag(4, "Tick handler for " .. action .. " is disabled.");
+
+  else
+    diag(4, "Tick handler for " .. action ..
+            " is set to run every " .. period_ticks ..
+            " ticks.");
+    script.on_nth_tick(period_ticks, handler);
+
   end;
-
-  -- Must re-read from the API.
-  local player_settings = settings.get_player_settings(player_index);
-  ret = {
-    enabled                = player_settings["bulldozer-equipment-enable-for-player"].value,
-    obstacle_entity_radius = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
-    obstacle_tile_radius   = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
-    want_remove_trees      = player_settings["bulldozer-equipment-want-remove-trees"].value,
-    want_remove_rocks      = player_settings["bulldozer-equipment-want-remove-rocks"].value,
-    want_remove_cliffs     = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
-    want_remove_water      = player_settings["bulldozer-equipment-want-remove-water"].value,
-    want_landfill_creation = player_settings["bulldozer-equipment-want-landfill-creation"].value,
-  };
-  diag(4, "Player " .. player_index ..
-          " has settings: " .. serpent.line(ret));
-
-  player_index_to_prefs[player_index] = ret;
-  return ret;
 end;
 
 
--- If `actor_entity` has the bulldozer equipment installed and it has
--- sufficient power, etc., return the preferences to use.  Otherwise
--- return nil and log a reason for it not being available.
-local function entity_bulldozer_prefs(actor_entity)
-  local actor_entity_desc =
-    actor_entity.name .. " " .. actor_entity.unit_number;
-
-  local player_index = player_index_of_entity(actor_entity);
+-- ------------------------- Equipment checks --------------------------
+-- If `entity` is associated with a player that has not disabled the
+-- mod, return that player's preferences.  Otherwise return nil and log
+-- the reason for it not being available.
+local function entity_bulldozer_prefs(entity)
+  local player_index = player_index_of_entity(entity);
   if (player_index < 0) then
-    diag(4, actor_entity_desc .. " is not associated with a player.");
+    diag(4, entity_desc(entity) .. " is not associated with a player.");
     return nil;
   end;
 
   local prefs = get_player_index_prefs(player_index);
   if (not prefs.enabled) then
-    diag(5, actor_entity_desc .. " has the mod disabled.");
+    diag(5, entity_desc(entity) .. " has the mod disabled.");
     return nil;
   end;
 
-  local equipment_grid = actor_entity.grid;
+  return prefs;
+end;
+
+
+-- If `entity` has the bulldozer equipment, return it as a LuaEquipment,
+-- ignoring whether it has sufficient power to operate.  Otherwise
+-- return nil and log the reason..
+local function get_equipped_bulldozer(entity)
+  local equipment_grid = entity.grid;
   if (equipment_grid == nil) then
-    diag(5, actor_entity_desc .. " has no equipment grid.");
+    diag(5, entity_desc(entity) .. " has no equipment grid.");
     return nil;
   end;
 
   local bulldozer_equipment = equipment_grid.find("bulldozer-equipment");
   if (bulldozer_equipment == nil) then
-    diag(5, actor_entity_desc .. " does not have a bulldozer.");
+    diag(5, entity_desc(entity) .. " does not have a bulldozer.");
+    return nil;
+  end;
+
+  return bulldozer_equipment;
+end;
+
+
+-- If `entity` meets all the requirements to have a functioning
+-- bulldozer, return the preferences associated with its player.
+-- Otherwise return nil and log the reason.
+local function entity_powered_enabled_bulldozer_prefs(entity)
+  local prefs = entity_bulldozer_prefs(entity);
+  if (not prefs) then
+    -- Reason has been logged.
+    return nil;
+  end;
+
+  local bulldozer_equipment = get_equipped_bulldozer(entity);
+  if (bulldozer_equipment == nil) then
+    -- Reason has been logged.
     return nil;
   end;
 
   local required_energy = bulldozer_equipment.max_energy / 2;
   if (bulldozer_equipment.energy < required_energy) then
-    diag(3, actor_entity_desc ..
+    diag(3, entity_desc(entity) ..
             " has a bulldozer with " .. bulldozer_equipment.energy ..
             " J, but that is less than the required " .. required_energy ..
             " J, so it is not operational.");
@@ -192,12 +239,94 @@ local function entity_bulldozer_prefs(actor_entity)
 end;
 
 
+-- If `entity` has the bulldozer equipment, add it to
+-- `unit_number_to_equipped_entity`.
+local function possibly_record_equipped_entity(entity)
+  if (get_equipped_bulldozer(entity)) then
+    diag(4, entity_desc(entity) .. " has the bulldozer equipped.");
+    unit_number_to_equipped_entity[entity.unit_number] = entity;
+  end;
+end;
+
+
+-- Scan the world for entities that have the bulldozer equipment, and
+-- record them in `unit_number_to_equipped_entity`.
+local function refresh_unit_number_to_equipped_entity()
+  diag(4, "Refreshing unit_number_to_equipped_entity.");
+  unit_number_to_equipped_entity = {};
+
+  for _, player in pairs(game.players) do
+    if (player.character) then
+      possibly_record_equipped_entity(player.character);
+    end;
+  end;
+
+  for _, vehicle in pairs(game.get_vehicles{}) do
+    possibly_record_equipped_entity(vehicle);
+  end;
+end;
+
+
+-- Refresh the table of entities if we just started running.
+local function maybe_initialize_unit_number_to_equipped_entity()
+  if (not unit_number_to_equipped_entity) then
+    refresh_unit_number_to_equipped_entity();
+  end;
+end;
+
+
+-- Called when equipment is added to or removed from a grid.
+local function on_equipment_inserted_or_removed(event)
+  local inserted = (event.name == defines.events.on_equipment_inserted);
+  local change_desc = (inserted and "inserted" or "removed");
+
+  -- The insertion event passes a LuaEquipment, while the removal event
+  -- only passes a string, because once something is removed from the
+  -- grid, it ceases to be a LuaEquipment.
+  --
+  -- Another difference is that insertion of multiple items causes
+  -- multiple events, while removal of multiple items only causes one
+  -- event.
+  --
+  local equipment_name =
+    (inserted and
+      event.equipment.name or
+      event.equipment);
+
+  diag(5, "on_equipment_inserted_or_removed:" ..
+          " inserted=" .. tostring(inserted) ..
+          " name=" .. equipment_name);
+
+  if (equipment_name == "bulldozer-equipment") then
+    local entity = event.grid.entity_owner;
+    if (entity == nil) then
+      -- Seems like this could only happen in a multiplayer scenario,
+      -- and maybe not even then.
+      diag(3, "Bulldozer " .. change_desc .. " but the entity is nil.");
+      return;
+    end;
+
+    diag(3, "Bulldozer equipment " .. change_desc ..
+            " for " .. entity_desc(entity) .. ".");
+
+    if (entity.type ~= "car" and entity.type ~= "character") then
+      diag(3, "But it is neither a car nor a character.");
+      return;
+    end;
+
+    -- In the insertion case, we know the equipment is there now.  But
+    -- in the removal case, there could still be another one present.
+    -- For simplicity, clear the entry and query the grid again.
+    unit_number_to_equipped_entity[entity.unit_number] = nil;
+    possibly_record_equipped_entity(entity);
+  end;
+end;
+
+
+-- ------------------------ Clearing obstacles -------------------------
 -- Scan near one entity for natural obstacles if it has the necessary
 -- equipment.
 local function entity_check_for_obstacles(actor_entity, prefs)
-  local actor_entity_desc =
-    actor_entity.name .. " " .. actor_entity.unit_number;
-
   local force = actor_entity.force;
   local surface = actor_entity.surface;
 
@@ -219,7 +348,7 @@ local function entity_check_for_obstacles(actor_entity, prefs)
       table.insert(types, "cliff");
     end;
 
-    diag(5, actor_entity_desc ..
+    diag(5, entity_desc(actor_entity) ..
             ": Scanning area within " .. prefs.obstacle_entity_radius ..
             " units of " .. pos_str(actor_entity.position) ..
             " for obstacle entities: " .. serpent.line(types));
@@ -264,7 +393,7 @@ local function entity_check_for_obstacles(actor_entity, prefs)
   end;
 
   if (prefs.want_remove_water) then
-    diag(5, actor_entity_desc ..
+    diag(5, entity_desc(actor_entity) ..
             ": Scanning area within " .. prefs.obstacle_tile_radius ..
             " units of " .. pos_str(actor_entity.position) ..
             " for obstacle tiles.");
@@ -297,37 +426,21 @@ end;
 
 
 -- True if `player` has moved within the past `action_period_ticks`,
--- given that it is `cur_tick`.  `action` is a string describing what
--- we do periodically.
+-- given that it is `cur_tick`.
 local function player_moved_recently(
   player,
   cur_tick,
-  action_period_ticks,
-  action)
-
+  action_period_ticks
+)
   local moved_tick = player_index_to_last_move_tick[player.index];
   if (moved_tick == nil) then
-    --[[
-    diag(5, "Player " .. player.index ..
-            " has not moved since the mod was loaded, skipping " ..
-            action .. ".");
-    --]]
+    diag(5, "Player " .. player.index .. " is not moving.");
     return false;
   end;
 
   local ticks_since_moved = cur_tick - moved_tick;
   if (ticks_since_moved > action_period_ticks) then
-    -- Normally commented-out since this is the usual case and the
-    -- whole point is optimization.
-    --[[
-    diag(5, "Player " .. player.index ..
-            " last moved on tick " .. moved_tick ..
-            ", but it is now tick " .. cur_tick ..
-            ", which is " .. ticks_since_moved .. " elapsed ticks, " ..
-            "which is greater than the current " .. action ..
-            " period of " .. action_period_ticks ..
-            ", so skipping this player.");
-    --]]
+    diag(5, "Player " .. player.index .. " is not moving.");
     return false;
   end;
 
@@ -335,69 +448,103 @@ local function player_moved_recently(
 end;
 
 
--- If `player` meets all the requirements for the bulldozer to function,
--- return their prefs.  Otherwise return nil and log a reason.
-local function player_bulldozer_prefs(player)
-  if (player.character == nil) then
-    diag(5, "Player " .. player.index .. " has no character.");
-    return nil;
-  end;
-
-  local prefs = entity_bulldozer_prefs(player.character);
-  if (not prefs) then
-    -- The reason has already been logged.
-    return nil;
-  end;
-
-  return prefs;
+-- Called when a player moves.
+local function on_player_changed_position(e)
+  --[[
+  diag(5, "Player " .. e.player_index ..
+          " moved on tick " .. e.tick .. ".");
+  --]]
+  player_index_to_last_move_tick[e.player_index] = e.tick;
 end;
 
 
 -- Scan near one player.
-local function player_check_for_obstacles(player, cur_tick)
+local function player_check_for_obstacles(player, prefs, cur_tick)
   if (not player_moved_recently(player, cur_tick,
-                                obstacle_check_period_ticks,
-                                "obstacle check")) then
+                                obstacle_check_period_ticks)) then
     return false;
-  end;
-
-  local prefs = player_bulldozer_prefs(player);
-  if (not prefs) then
-    return;
   end;
 
   entity_check_for_obstacles(player.character, prefs);
 end;
 
 
--- Scan the areas near all players.
-local function all_players_check_for_obstacles(tick)
-  for _, player in pairs(game.players) do
-    player_check_for_obstacles(player, tick);
-  end;
-end;
-
-
 -- Scan near one vehicle.
-local function vehicle_check_for_obstacles(vehicle)
-  local prefs = entity_bulldozer_prefs(vehicle);
-  if (not prefs) then
-    -- The reason has already been logged.
-    return nil;
-  end;
-
+local function vehicle_check_for_obstacles(vehicle, prefs)
   entity_check_for_obstacles(vehicle, prefs);
 end;
 
 
--- Scan the areas near all moving vehicles.
-local function all_vehicles_check_for_obstacles()
-  for _, vehicle in pairs(game.get_vehicles{is_moving=true}) do
-    vehicle_check_for_obstacles(vehicle);
+-- Do something for all equipped and enabled entities, depending on its
+-- type.  For character entities, we pass the associated player, or do
+-- nothing if there isn't one.  In both cases, the second argument is
+-- the applicable preferences.
+local function for_all_powered_enabled_equipped_entities(
+  action_desc,
+  vehicle_action,
+  player_action
+)
+  maybe_initialize_unit_number_to_equipped_entity();
+
+  diag(5, "---- all enabled equipped entities: " .. action_desc .. " ----");
+
+  for _, entity in pairs(unit_number_to_equipped_entity) do
+    if (entity.type == "car") then
+      -- As an optimization, only do things with a moving vehicle.
+      if (entity.speed == 0) then
+        diag(5, entity_desc(entity) .. " is not moving.");
+        return;
+      end;
+
+      local prefs = entity_powered_enabled_bulldozer_prefs(entity);
+      if (not prefs) then
+        return;
+      end;
+
+      vehicle_action(entity, prefs);
+
+    elseif (entity.type == "character") then
+      if (entity.player) then
+        local prefs = entity_powered_enabled_bulldozer_prefs(entity);
+        if (not prefs) then
+          return;
+        end;
+
+        player_action(entity.player, prefs);
+
+      else
+        diag(5, entity_desc(entity) .. " is a character that is " ..
+                "not associated with any player.");
+      end;
+
+    else
+      report_bug(entity_desc(entity) .. " is neither a car nor " ..
+                 "a character; how did it get into my table?");
+
+    end;
   end;
 end;
 
 
+-- Scan the areas near all equipped entities for obstacles to clear.
+local function all_equipped_entities_check_for_obstacles(cur_tick)
+  for_all_powered_enabled_equipped_entities(
+    "check for obstacles",
+    vehicle_check_for_obstacles,
+    function(player, prefs)
+      player_check_for_obstacles(player, prefs, cur_tick);
+    end
+  );
+end;
+
+
+-- Called for the obstacle check tick handler.
+local function on_obstacle_check_tick(event)
+  all_equipped_entities_check_for_obstacles(event.tick);
+end;
+
+
+-- ------------------------- Landfill creation -------------------------
 -- Description of what we insert when we successfully convert items to
 -- landfill.
 local one_item_landfill_stack = {
@@ -494,26 +641,24 @@ local function entity_create_landfill(
   main_inv_id,
   trash_inv_id
 )
-  local entity_desc = entity.name .. " " .. entity.unit_number;
-
   if (not prefs.want_landfill_creation) then
-    diag(5, entity_desc .. " has landfill creation disabled.");
+    diag(5, entity_desc(entity) .. " has landfill creation disabled.");
     return;
   end;
 
   local main_inv = entity.get_inventory(main_inv_id);
   if (not main_inv) then
-    diag(4, entity_desc .. " does not have a main inventory.");
+    diag(4, entity_desc(entity) .. " does not have a main inventory.");
     return;
   end;
 
   -- Try converting from trash first.
   local trash_inv = entity.get_inventory(trash_inv_id);
   if (not trash_inv) then
-    diag(4, entity_desc .. " does not have a trash inventory.");
+    diag(4, entity_desc(entity) .. " does not have a trash inventory.");
   else
     local situation =
-      entity_desc .. " creating landfill from trash inventory";
+      entity_desc(entity) .. " creating landfill from trash inventory";
     if (create_landfill(situation, trash_inv, main_inv)) then
       return;
     end;
@@ -521,7 +666,7 @@ local function entity_create_landfill(
 
   -- Then convert from the main inventory.
   local situation =
-    entity_desc .. " creating landfill from main inventory";
+    entity_desc(entity) .. " creating landfill from main inventory";
   if (create_landfill(situation, main_inv, main_inv)) then
     return;
   end;
@@ -529,13 +674,7 @@ end;
 
 
 -- Possibly create landfill for one player.
-local function player_create_landfill(player)
-  -- Among other things, ensure the player has a character.
-  local prefs = player_bulldozer_prefs(player);
-  if (not prefs) then
-    return;
-  end;
-
+local function player_create_landfill(player, prefs)
   entity_create_landfill(player.character,
     prefs,
     defines.inventory.character_main,
@@ -543,21 +682,8 @@ local function player_create_landfill(player)
 end;
 
 
--- Possibly create landfill for all players.
-local function all_players_create_landfill()
-  for _, player in pairs(game.players) do
-    player_create_landfill(player);
-  end;
-end;
-
-
 -- Possibly create landfill for one vehicle.
-local function vehicle_create_landfill(vehicle)
-  local prefs = entity_bulldozer_prefs(vehicle);
-  if (not prefs) then
-    return;
-  end;
-
+local function vehicle_create_landfill(vehicle, prefs)
   -- Note: There is no inventory define for `car_trash`, but it appears
   -- that the tank at least follows the same pattern of values as the
   -- spider, so we can use `spider_trash` (which has value 4) to get the
@@ -573,40 +699,46 @@ local function vehicle_create_landfill(vehicle)
 end;
 
 
--- Possibly create landfill for all vehicles that are moving.
-local function all_vehicles_create_landfill()
-  for _, vehicle in pairs(game.get_vehicles{is_moving=true}) do
-    vehicle_create_landfill(vehicle);
-  end;
-end;
-
-
--- Called for the obstacle check tick handler.
-local function on_obstacle_check_tick(event)
-  all_players_check_for_obstacles(event.tick);
-  all_vehicles_check_for_obstacles();
+-- For all bulldozer-equipped entities, possibly create landfill.
+local function all_equipped_entities_create_landfill()
+  for_all_powered_enabled_equipped_entities(
+    "create landfill",
+    vehicle_create_landfill,
+    player_create_landfill);
 end;
 
 
 -- Called for the landfill creation tick handler.
 local function on_landfill_creation_tick(event)
-  all_players_create_landfill();
-  all_vehicles_create_landfill();
+  all_equipped_entities_create_landfill();
 end;
 
 
--- If `period_ticks` is non-zero, register `handler`.
-local function possibly_register_nth_tick_handler(period_ticks, action, handler)
-  if (period_ticks == 0) then
-    diag(4, "Tick handler for " .. action .. " is disabled.");
-
-  else
-    diag(4, "Tick handler for " .. action ..
-            " is set to run every " .. period_ticks ..
-            " ticks.");
-    script.on_nth_tick(period_ticks, handler);
-
+-- --------------------------- Configuration ---------------------------
+-- Return a table containing the preferences for `player_index`.
+get_player_index_prefs = function(player_index)
+  local ret = player_index_to_prefs[player_index];
+  if (ret) then
+    return ret;
   end;
+
+  -- Must re-read from the API.  The docs imply this cannot return nil.
+  local player_settings = settings.get_player_settings(player_index);
+  ret = {
+    enabled                = player_settings["bulldozer-equipment-enable-for-player"].value,
+    obstacle_entity_radius = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
+    obstacle_tile_radius   = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
+    want_remove_trees      = player_settings["bulldozer-equipment-want-remove-trees"].value,
+    want_remove_rocks      = player_settings["bulldozer-equipment-want-remove-rocks"].value,
+    want_remove_cliffs     = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
+    want_remove_water      = player_settings["bulldozer-equipment-want-remove-water"].value,
+    want_landfill_creation = player_settings["bulldozer-equipment-want-landfill-creation"].value,
+  };
+  diag(4, "Player " .. player_index ..
+          " has settings: " .. serpent.line(ret));
+
+  player_index_to_prefs[player_index] = ret;
+  return ret;
 end;
 
 
@@ -623,6 +755,7 @@ local function read_configuration_settings()
   -- Clear any existing tick handlers.
   script.on_nth_tick(nil);
 
+  -- Update global preferences.
   diagnostic_verbosity           = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
   obstacle_check_period_ticks    = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
   landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;
@@ -654,14 +787,12 @@ local function read_configuration_settings()
 end;
 
 
--- Called when a player moves.
-local function on_player_changed_position(e)
-  --diag(5, "Player " .. e.player_index ..
-  --        " moved on tick " .. e.tick .. ".");
-  player_index_to_last_move_tick[e.player_index] = e.tick;
+local function on_runtime_mod_setting_changed(event)
+  read_configuration_settings();
 end;
 
 
+-- -------------------------- Initialization ---------------------------
 -- Set `landfillable_tile_names`.
 --
 -- I would prefer to just read
@@ -704,12 +835,6 @@ local function set_landfillable_tile_names()
 end;
 
 
-local function on_runtime_mod_setting_changed(event)
-  read_configuration_settings();
-end;
-
-
--- -------------------------- Initialization ---------------------------
 read_configuration_settings();
 
 script.on_event(defines.events.on_runtime_mod_setting_changed,
@@ -717,6 +842,10 @@ script.on_event(defines.events.on_runtime_mod_setting_changed,
 
 script.on_event(defines.events.on_player_changed_position,
   on_player_changed_position);
+
+script.on_event({defines.events.on_equipment_inserted,
+                 defines.events.on_equipment_removed},
+  on_equipment_inserted_or_removed);
 
 set_landfillable_tile_names();
 
