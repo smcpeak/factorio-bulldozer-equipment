@@ -350,10 +350,12 @@ local function entity_check_for_obstacles(actor_entity, prefs)
       table.insert(types, "cliff");
     end;
 
+    --[[
     diag(5, entity_desc(actor_entity) ..
             ": Scanning area within " .. prefs.obstacle_entity_radius ..
             " units of " .. pos_str(actor_entity.position) ..
             " for obstacle entities: " .. serpent.line(types));
+    --]]
 
     local area = bounding_box_with_radius(
       actor_entity.position,
@@ -395,10 +397,12 @@ local function entity_check_for_obstacles(actor_entity, prefs)
   end;
 
   if (prefs.want_remove_water) then
+    --[[
     diag(5, entity_desc(actor_entity) ..
             ": Scanning area within " .. prefs.obstacle_tile_radius ..
             " units of " .. pos_str(actor_entity.position) ..
             " for obstacle tiles.");
+    --]]
 
     area = bounding_box_with_radius(
       actor_entity.position,
