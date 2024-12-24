@@ -801,20 +801,33 @@ local function set_all_players_shortcut_button_state()
 end
 
 
+-- Toggle the enablement for `player_index`.
+local function toggle_bulldozer_for_player(player_index)
+  local setting_name = "bulldozer-equipment-enable-for-player";
+
+  -- Toggle the settings value.  This sends mod_setting_changed
+  -- event, which will update the shortcut button in the UI.
+  local player_settings = settings.get_player_settings(player_index);
+  local new_value = not player_settings[setting_name].value;
+  player_settings[setting_name] = {value = new_value};
+end;
+
+
 -- React to pressing the shortcut button.
 local function on_shortcut_pressed(event)
   if (event.prototype_name == "bulldozer-equipment") then
-    diag(4, "Shortcut button pressed.");
+    diag(4, "on_shortcut_pressed: " .. serpent.block(event));
 
-    local player_index = event.player_index;
-    local setting_name = "bulldozer-equipment-enable-for-player";
-
-    -- Toggle the settings value.  This sends mod_setting_changed
-    -- event, which will update the UI.
-    local player_settings = settings.get_player_settings(player_index);
-    local new_value = not player_settings[setting_name].value;
-    player_settings[setting_name] = {value = new_value};
+    toggle_bulldozer_for_player(event.player_index);
   end;
+end;
+
+
+-- Called when the bulldozer custom input key is pressed.
+local function on_custom_input(event)
+  diag(4, "on_custom_input: " .. serpent.block(event));
+
+  toggle_bulldozer_for_player(event.player_index);
 end;
 
 
@@ -1110,6 +1123,9 @@ script.on_event({defines.events.on_equipment_inserted,
 
 script.on_event(defines.events.on_lua_shortcut,
   on_shortcut_pressed);
+
+script.on_event("toggle-bulldozer-equipment",
+  on_custom_input);
 
 script.on_configuration_changed(on_configuration_changed);
 

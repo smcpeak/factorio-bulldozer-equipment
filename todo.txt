@@ -1,7 +1,5 @@
 Bulldozer Equipment TODO
 ========================
 
-Re-introduce the shorcut button to enable and disable bulldozer.
-
 
 EOF

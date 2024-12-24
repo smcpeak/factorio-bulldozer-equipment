@@ -158,6 +158,15 @@ local bulldozer_shortcut = {
 };
 
 
+-- --------------------------- Custom input ----------------------------
+local bulldozer_custom_input = {
+  type = "custom-input",
+  name = "toggle-bulldozer-equipment",
+  key_sequence = "",         -- Not set to anything by default.
+  consuming = "none",
+};
+
+
 -- ---------------------- Add the new definitions ----------------------
 data:extend{
   bulldozer_equipment,
@@ -165,6 +174,7 @@ data:extend{
   bulldozer_recipe,
   bulldozer_technology,
   bulldozer_shortcut,
+  bulldozer_custom_input,
 };
 
 
