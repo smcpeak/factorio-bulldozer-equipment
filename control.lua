@@ -184,7 +184,9 @@ local function entity_bulldozer_prefs(entity)
 
   local prefs = get_player_index_prefs(player_index);
   if (not prefs.enabled) then
-    --diag(5, entity_desc(entity) .. " has the mod disabled.");
+    if (diagnostic_verbosity >= 5) then
+      diag(5, entity_desc(entity) .. " has the mod disabled.");
+    end;
     return nil;
   end;
 
@@ -350,12 +352,12 @@ local function entity_check_for_obstacles(actor_entity, prefs)
       table.insert(types, "cliff");
     end;
 
-    --[[
-    diag(5, entity_desc(actor_entity) ..
-            ": Scanning area within " .. prefs.obstacle_entity_radius ..
-            " units of " .. pos_str(actor_entity.position) ..
-            " for obstacle entities: " .. serpent.line(types));
-    --]]
+    if (diagnostic_verbosity >= 5) then
+      diag(5, entity_desc(actor_entity) ..
+              ": Scanning area within " .. prefs.obstacle_entity_radius ..
+              " units of " .. pos_str(actor_entity.position) ..
+              " for obstacle entities: " .. serpent.line(types));
+    end;
 
     local area = bounding_box_with_radius(
       actor_entity.position,
@@ -397,12 +399,12 @@ local function entity_check_for_obstacles(actor_entity, prefs)
   end;
 
   if (prefs.want_remove_water) then
-    --[[
-    diag(5, entity_desc(actor_entity) ..
-            ": Scanning area within " .. prefs.obstacle_tile_radius ..
-            " units of " .. pos_str(actor_entity.position) ..
-            " for obstacle tiles.");
-    --]]
+    if (diagnostic_verbosity >= 5) then
+      diag(5, entity_desc(actor_entity) ..
+              ": Scanning area within " .. prefs.obstacle_tile_radius ..
+              " units of " .. pos_str(actor_entity.position) ..
+              " for obstacle tiles.");
+    end;
 
     area = bounding_box_with_radius(
       actor_entity.position,
@@ -440,13 +442,17 @@ local function player_moved_recently(
 )
   local moved_tick = player_index_to_last_move_tick[player.index];
   if (moved_tick == nil) then
-    --diag(5, "Player " .. player.index .. " is not moving.");
+    if (diagnostic_verbosity >= 5) then
+      diag(5, "Player " .. player.index .. " is not moving.");
+    end;
     return false;
   end;
 
   local ticks_since_moved = cur_tick - moved_tick;
   if (ticks_since_moved > action_period_ticks) then
-    --diag(5, "Player " .. player.index .. " is not moving.");
+    if (diagnostic_verbosity >= 5) then
+      diag(5, "Player " .. player.index .. " is not moving.");
+    end;
     return false;
   end;
 
@@ -456,10 +462,10 @@ end;
 
 -- Called when a player moves.
 local function on_player_changed_position(e)
-  --[[
-  diag(5, "Player " .. e.player_index ..
-          " moved on tick " .. e.tick .. ".");
-  --]]
+  if (diagnostic_verbosity >= 5) then
+    diag(5, "Player " .. e.player_index ..
+            " moved on tick " .. e.tick .. ".");
+  end;
   player_index_to_last_move_tick[e.player_index] = e.tick;
 end;
 
@@ -492,7 +498,9 @@ local function for_all_powered_enabled_equipped_entities(
 )
   maybe_initialize_unit_number_to_equipped_entity();
 
-  --diag(5, "---- all enabled equipped entities: " .. action_desc .. " ----");
+  if (diagnostic_verbosity >= 5) then
+    diag(5, "---- all enabled equipped entities: " .. action_desc .. " ----");
+  end;
 
   for _, entity in pairs(unit_number_to_equipped_entity) do
     if (entity.type == "car") then
