@@ -775,6 +775,41 @@ local function on_landfill_creation_tick(event)
 end;
 
 
+-- -------------------------- Shortcut button --------------------------
+-- Set the state of the shortcut button based on the current settings.
+local function set_shortcut_button_state(player)
+  local setting_name = "bulldozer-equipment-enable-for-player";
+  local shortcut_name = "bulldozer-equipment";
+
+  local player_settings = settings.get_player_settings(player.index);
+  local cur_value = player_settings[setting_name].value;
+
+  -- Here, "toggled" means "pressed", i.e., enabled.
+  player.set_shortcut_toggled(shortcut_name, cur_value);
+
+  diag(3, "Player " .. player.index ..
+          ": Set shortcut button state to " .. tostring(cur_value));
+
+end;
+
+
+-- React to pressing the shortcut button.
+local function on_shortcut_pressed(event)
+  if (event.prototype_name == "bulldozer-equipment") then
+    diag(4, "Shortcut button pressed.");
+
+    local player_index = event.player_index;
+    local setting_name = "bulldozer-equipment-enable-for-player";
+
+    -- Toggle the settings value.  This sends mod_setting_changed
+    -- event, which will update the UI.
+    local player_settings = settings.get_player_settings(player_index);
+    local new_value = not player_settings[setting_name].value;
+    player_settings[setting_name] = {value = new_value};
+  end;
+end;
+
+
 -- --------------------------- Configuration ---------------------------
 -- Return a table containing the preferences for `player_index`.
 get_player_index_prefs = function(player_index)
@@ -852,7 +887,17 @@ end;
 
 
 local function on_runtime_mod_setting_changed(event)
+  diag(4, "runtime_mod_setting_changed:" ..
+          " setting=" .. event.setting ..
+          " setting_type=" .. event.setting_type ..
+          " player_index=" .. tostring(event.player_index));
+
   read_configuration_settings();
+
+  if (event.setting == "bulldozer-equipment-enable-for-player") then
+    -- Update shortcut button state.
+    set_shortcut_button_state(game.get_player(event.player_index));
+  end;
 end;
 
 
@@ -1033,6 +1078,9 @@ script.on_event(defines.events.on_player_changed_position,
 script.on_event({defines.events.on_equipment_inserted,
                  defines.events.on_equipment_removed},
   on_equipment_inserted_or_removed);
+
+script.on_event(defines.events.on_lua_shortcut,
+  on_shortcut_pressed);
 
 set_landfillable_tile_names();
 
