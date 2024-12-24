@@ -11,8 +11,8 @@ The primary intended use case is to equip the lead tanks of a
 equipment so that they will order a path to be cleared.  The robots that
 do the actual clearing can be carried by the player, the RoboTanks, or
 both.  It allows the formation to roll though virtually any obstacle,
-provided it has enough resources (cliff explosives and landfill), free
-space to store the trash, and armor and armament to deal with hostiles.
+provided it has enough resources (cliff explosives and landfill) and
+armor and armament to deal with hostiles.
 
 Among other things, this equipment allows attacking while moving south
 with a RoboTank squad, which is otherwise nearly impossible to due the
@@ -61,6 +61,27 @@ although typically far below the replacement level when doing
 significant filling of water.
 
 
+Controlling enablement
+----------------------
+
+On a per-player basis, the bulldozer functions can be enabled or
+disabled using any of:
+
+* A shortcut button on the toolbar.
+* A keybinding that is not bound by default.
+* A checkbox in the mod settings menu.
+
+This setting affects both the player character and any vehicles whose
+"last user" is that player.  Vehicles that are not associated with a
+player (which is unusual, but can happen in modded games) do not perform
+any bulldozer functions.
+
+There are also more fine-grained settings in the mod settings menu to
+control exactly which functions are performed, for example whether to
+remove trees, whether to landfill water, and which resources (if any) to
+turn into landfill.
+
+
 Balance considerations
 ======================
 
@@ -81,9 +102,18 @@ Performance considerations
 For both player characters and vehicles, the obstacle clearing function
 only activates when the actor moves, so the cost is generally small.
 
-The process of designating tiles for landfilling is somewhat slow, so if
-the mod is configured to use a large tile search radius and short period
-between checks, there could be a UPS hit when approaching a shoreline.
+More specifically, my performance targets are, for a large map (and on
+my modest hardware):
+
+* If bulldozer is disabled, 1 us per tick on average.
+* If bulldozer is enabled but nothing is moving, 5 us per tick on average.
+* If enabled and moving but not near water, 15 us per tick on average.
+
+The process of designating tiles for landfilling is somewhat slow since
+each water tile (that doesn't have a ghost tile yet) has to be iterated
+over in Lua, crossing the C++/Lua boundary for each one.  If the mod is
+configured to use a large tile search radius and short period between
+checks, there could be a UPS hit when approaching a shoreline.
 
 
 Related mods
