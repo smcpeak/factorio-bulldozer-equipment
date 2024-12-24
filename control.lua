@@ -7,8 +7,8 @@
 -- as the default setting values.
 
 -- If true, call the `error` function when something goes wrong, causing
--- a crash.  I set this manually during development.
-local error_on_bug = false;
+-- a crash.
+local call_error_on_bug = false;
 
 -- How much to log, from among:
 --   0: Nothing.
@@ -96,7 +96,7 @@ end;
 local function report_bug(message)
   diag(1, "BUG: " .. message);
 
-  if (error_on_bug) then
+  if (call_error_on_bug) then
     error(message);
   end;
 end;
@@ -775,6 +775,7 @@ local function read_configuration_settings()
   script.on_nth_tick(nil);
 
   -- Update global preferences.
+  call_error_on_bug              = settings.global["bulldozer-equipment-call-error-on-bug"].value;
   diagnostic_verbosity           = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
   obstacle_check_period_ticks    = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
   landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;

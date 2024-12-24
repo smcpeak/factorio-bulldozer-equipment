@@ -22,6 +22,9 @@ command.  The console command to use is:
 All tests assume BE has been installed into Factorio, but may call for a
 save-game file that was created without it.
 
+For all tests, ensure the configuration option "Call error on bug" is
+set to true.
+
 
 Adding the mod
 ==============

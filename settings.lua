@@ -3,6 +3,14 @@
 
 data:extend({
   -- ------------------------- Global settings -------------------------
+  -- Call the error() function when a bug is detected?
+  {
+    type = "bool-setting",
+    name = "bulldozer-equipment-call-error-on-bug",
+    setting_type = "runtime-global",
+    default_value = false,
+  },
+
   -- Diagnostic log verbosity level.  See `diagnostic_verbosity` in
   -- control.lua.
   {
