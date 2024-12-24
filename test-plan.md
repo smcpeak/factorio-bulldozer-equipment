@@ -31,6 +31,8 @@ Adding the mod
 
 Load a game that was saved without BE installed.
 
+My save: infinity_items
+
 Check that the BE technology appears in the tech tree.
 
 Check that the BE preferences are available in the settings menu, both
@@ -67,6 +69,8 @@ Load a game that has:
 * The BE prereqs researched.
 * BE not researched.
 
+My save: bulldozer_test_unlock_be
+
 Complete the BE research.
 
 Check that BE technology is now shown as researched.
@@ -83,6 +87,8 @@ Load a game that has:
 * Cliff Explosives not researched.
 * A BE item in the player's equipment grid.
 * A portable fusion generator in the grid.
+
+My save: bulldozer_test_no_cliff_explosives
 
 Walk near cliffs.
 
@@ -111,6 +117,8 @@ Load a game that has:
 * A BE item in the player's equipment grid.
 * A portable fusion generator in the grid.
 
+My save: bulldozer_test_with_cliff_explosives
+
 Walk near cliffs.
 
 Check that cliffs are designated for removal.
@@ -132,6 +140,8 @@ Load a game that has:
 
 * A BE item in the player's inventory but not in the equipment grid.
 * A portable fusion generator in the grid.
+
+My save: bulldozer_test_equip_be
 
 Walk near some trees.
 
@@ -162,6 +172,8 @@ Load a game that has:
 * A BE item in the player's equipment grid.
 * A portable fusion generator in the grid.
 
+My save: bulldozer_test_be_equipped
+
 Walk near some trees and check they are marked for destruction.
 
 
@@ -173,6 +185,8 @@ Load a game that has:
 * A BE item in the player's equipment grid.
 * A portable fusion generator in the grid.
 * Another BE item in the player's inventory.
+
+My save: bulldozer_test_second_be
 
 Walk near some trees and check they are marked for destruction.
 
@@ -198,12 +212,19 @@ Load a game that has:
 
 * A BE item in the player's inventory but not in the equipment grid.
 * No power source in the grid.
+* Power source in player's inventory.
+
+My save: bulldozer_test_be_unpowered
 
 Add the BE item to the grid.
 
 Walk near some trees.
 
 Check that no trees are marked for destruction (BE is unpowered).
+
+Add the power source to the grid.
+
+Walk near some trees, check they are marked.
 
 
 Obstacle clearance settings
@@ -218,12 +239,14 @@ Load a game that has:
 * A BE item in the player's equipment grid.
 * A portable fusion generator in the grid.
 
+My save: bulldozer_test_near_trees
+
 Walk near some trees, and continue slowly walking through them.
 
 Check that the trees are marked approximately continuously (every 15
 ticks).
 
-In the settings menu, change the obstacle check period to 300 ticks.
+In the settings menu, change "Obstacle check period" to 300 ticks.
 
 Walk near some trees, and continue slowly walking through them.
 
@@ -250,13 +273,25 @@ Load a game that has:
 * A BE item in the player's equipment grid.
 * A portable fusion generator in the grid.
 
+My save: bulldozer_test_near_trees
+
+Check that the shortcut button has a yellow background.
+
 Walk near some trees and check they are marked.
 
-In settings, disable the mod for the player.
+In player settings, uncheck "Enable for this player".
+
+Check that the shortcut button now has a gray background.
 
 Walk near some trees.
 
 Check that they are not marked.
+
+Click the shortcut button.
+
+Check that it once again has a yellow background.
+
+Walk near some trees and check they are marked.
 
 
 Disable all clearance types
@@ -268,8 +303,10 @@ Load a game that has:
 * Cliff Explosives researched.
 * BE and power source in the player's grid.
 
-Go into the settings menu and uncheck all of the options related to
-obstacle clearance.
+My save: bulldozer_test_near_all4
+
+Go into the player settings menu and uncheck all of the options related
+to obstacle clearance.
 
 Walk near some trees, rocks, cliffs, and water.
 
@@ -298,6 +335,8 @@ Load a game that has:
 * BE researched.
 * Cliff Explosives researched.
 * BE and power source in the player's grid.
+
+My save: bulldozer_test_near_all4
 
 Walk near some trees and check that they are marked upon close approach.
 
@@ -336,6 +375,8 @@ For these tests, load a game that has:
 * A BE item in the player's inventory but not in the grid.
 * A portable fission generator in the player's inventory.
 * A tank and fuel in the player's inventory.
+
+My save: bulldozer_test_tank_in_inv
 
 
 Place a tank
@@ -398,6 +439,8 @@ Load a game that has:
 * Power source in the player's grid.
 * 1000 wood, 500 stone, and 500 coal in player's inventory.
 
+My save: bulldozer_test_1k_wood_etc
+
 Check that no items are being converted to landfill.
 
 
@@ -448,6 +491,8 @@ Load a game that has:
 * Power source in the player's grid.
 * 1000 wood, 500 stone, and 500 coal in player's inventory.
 
+My save: bulldozer_test_1k_wood_etc
+
 Add BE to the grid.
 
 Check that items are converted at a rate of one per second.
@@ -477,13 +522,25 @@ Load a game that has:
 * Power source in the player's grid.
 * 1000 wood, 500 stone, and 500 coal in player's inventory.
 
+My save: bulldozer_test_1k_wood_etc
+
+Check that the shortcut button has a yellow background.
+
 Add BE to the grid.
 
 Check that items are converted.
 
-In settings, disable the mod for the player.
+In player settings, disable the mod for the player.
 
 Check that no items are converted.
+
+Check that the shortcut button now has a gray background.
+
+Click the shortcut button.
+
+Check that items are being converted.
+
+Check that the shortcut button has a yellow background again.
 
 
 Vehicle landfill creation
@@ -502,6 +559,8 @@ Load a game that has:
 * Power source in the tank's grid.
 * No BE in the tank's grid.
 * 1000 wood, 500 stone, and 500 coal in tank's inventory.
+
+My save: bulldozer_test_tank_1k_wood_etc
 
 Check that no conversion is happening of items in the tank's inventory.
 
@@ -531,15 +590,19 @@ Conversion from trash
 Continue the previous test.
 
 Before all items are converted, check the "trash unrequested" box so
-they all move to the tank's trash inventory.
+most of it moves to the tank's trash inventory.
 
-Check that remaining items are begin converted to landfill that is
-placed in the tank's trash inventory.
+Drive forward and check that remaining items are begin converted to
+landfill that is placed in the tank's trash inventory.
 
 Before all items are converted, uncheck "trash unrequested".
 
 Check that all remaining items are converted to landfill, with the
 newly converted items going into the main inventory.
+
+Click the shortcut button to disable the mod.
+
+Drive forward and check that no conversion happens.
 
 
 Character lifecycle
@@ -552,6 +615,10 @@ Die with BE equipped
 Load a save that has:
 
 * BE and a power source equipped in the player's grid.
+* A biter nest nearby.
+* A fueled and armed car near the player spawn point for quick return.
+
+My save: bulldozer_test_get_killed
 
 Get killed by biters.
 
@@ -572,6 +639,8 @@ Load a save that has:
 
 * One set of armor equipped with BE and power.
 * Another set of armor in the inventory with no BE or power.
+
+My save: bulldozer_test_swap_armor
 
 Walk toward some trees, check they get marked.
 
@@ -625,7 +694,7 @@ Load a save that has:
 
 My save: bulldozer_test_place_be_tank
 
-Place the vehicle down.
+Place the vehicle down and add fuel.
 
 Drive toward some trees.
 
@@ -635,7 +704,7 @@ Pick up the vehicle.
 
 Walk toward some trees and check they are not marked.
 
-Place the vehicle down again.
+Place the vehicle down again and add fuel.
 
 Drive toward trees and check they are marked.
 
@@ -645,7 +714,8 @@ Vehicle with BE destroyed
 
 Load a save that has:
 
-* BE equipped in a vehicle grid with power, vehicle placed on the ground.
+* BE equipped in a vehicle grid with power, vehicle placed on the ground,
+  with low health.
 * Another vehicle with no equipment in the player's inventory.
 * BE, power source, and fuel in player's inventory.
 
