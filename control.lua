@@ -777,7 +777,7 @@ end;
 
 -- -------------------------- Shortcut button --------------------------
 -- Set the state of the shortcut button based on the current settings.
-local function set_shortcut_button_state(player)
+local function set_one_player_shortcut_button_state(player)
   local setting_name = "bulldozer-equipment-enable-for-player";
   local shortcut_name = "bulldozer-equipment";
 
@@ -791,6 +791,14 @@ local function set_shortcut_button_state(player)
           ": Set shortcut button state to " .. tostring(cur_value));
 
 end;
+
+
+-- For all players, set their shortcut button state.
+local function set_all_players_shortcut_button_state()
+  for _, player in (pairs(game.players)) do
+    set_one_player_shortcut_button_state(player);
+  end;
+end
 
 
 -- React to pressing the shortcut button.
@@ -896,8 +904,29 @@ local function on_runtime_mod_setting_changed(event)
 
   if (event.setting == "bulldozer-equipment-enable-for-player") then
     -- Update shortcut button state.
-    set_shortcut_button_state(game.get_player(event.player_index));
+    set_one_player_shortcut_button_state(game.get_player(event.player_index));
   end;
+end;
+
+
+-- Called when the game has been update, mods added, etc.
+local function on_configuration_changed(event)
+  diag(4, "on_configuration_changed: " .. serpent.block(event));
+
+  -- I don't have anything to do here, but I want to log the event for
+  -- my own edification.
+end;
+
+
+-- Called when this mod is added to a save.
+local function on_init()
+  diag(4, "on_init");
+
+  -- This is how we get the shortcut button to start in the "toggled"
+  -- (pressed) state.  The button state is then persisted in the save
+  -- file, so nothing more needs to be done when loading a save where
+  -- the mod was already present.
+  set_all_players_shortcut_button_state();
 end;
 
 
@@ -1081,6 +1110,10 @@ script.on_event({defines.events.on_equipment_inserted,
 
 script.on_event(defines.events.on_lua_shortcut,
   on_shortcut_pressed);
+
+script.on_configuration_changed(on_configuration_changed);
+
+script.on_init(on_init);
 
 set_landfillable_tile_names();
 
