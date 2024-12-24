@@ -125,7 +125,17 @@ end;
 
 -- Return a string succinctly describing this entity.
 local function entity_desc(entity)
-  return entity.name .. " " .. entity.unit_number;
+  -- Since this is used as part of the diagnostics, be extra defensive
+  -- here so I don't lose info about unexpected circumstances.
+  if (entity.valid) then
+    if (entity.unit_number) then
+      return entity.name .. " " .. entity.unit_number;
+    else
+      return entity.name .. " with no unit number";
+    end;
+  else
+    return "<invalid entity>";
+  end;
 end;
 
 
@@ -279,6 +289,18 @@ local function maybe_initialize_unit_number_to_equipped_entity()
 end;
 
 
+-- Clear the table entry associated with `entity` and query its grid
+-- again.
+local function refresh_whether_entity_is_equipped(entity)
+  if (entity.unit_number) then
+    unit_number_to_equipped_entity[entity.unit_number] = nil;
+    possibly_record_equipped_entity(entity);
+  else
+    report_bug("Refreshing an entity with no unit number.");
+  end;
+end;
+
+
 -- Called when equipment is added to or removed from a grid.
 local function on_equipment_inserted_or_removed(event)
   local inserted = (event.name == defines.events.on_equipment_inserted);
@@ -305,7 +327,9 @@ local function on_equipment_inserted_or_removed(event)
     local entity = event.grid.entity_owner;
     if (entity == nil) then
       -- Seems like this could only happen in a multiplayer scenario,
-      -- and maybe not even then.
+      -- and maybe not even then.  Or maybe this could happen if a mod
+      -- can reach into the equipment grid of a vehicle that has been
+      -- picked up, and is hence an item rather than an entity?
       diag(3, "Bulldozer " .. change_desc .. " but the entity is nil.");
       return;
     end;
@@ -320,9 +344,7 @@ local function on_equipment_inserted_or_removed(event)
 
     -- In the insertion case, we know the equipment is there now.  But
     -- in the removal case, there could still be another one present.
-    -- For simplicity, clear the entry and query the grid again.
-    unit_number_to_equipped_entity[entity.unit_number] = nil;
-    possibly_record_equipped_entity(entity);
+    refresh_whether_entity_is_equipped(entity);
   end;
 end;
 
@@ -502,39 +524,53 @@ local function for_all_powered_enabled_equipped_entities(
     diag(5, "---- all enabled equipped entities: " .. action_desc .. " ----");
   end;
 
-  for _, entity in pairs(unit_number_to_equipped_entity) do
-    if (entity.type == "car") then
-      -- As an optimization, only do things with a moving vehicle.
-      if (entity.speed == 0) then
-        --diag(5, entity_desc(entity) .. " is not moving.");
-        return;
-      end;
-
-      local prefs = entity_powered_enabled_bulldozer_prefs(entity);
-      if (not prefs) then
-        return;
-      end;
-
-      vehicle_action(entity, prefs);
-
-    elseif (entity.type == "character") then
-      if (entity.player) then
-        local prefs = entity_powered_enabled_bulldozer_prefs(entity);
-        if (not prefs) then
-          return;
-        end;
-
-        player_action(entity.player, prefs);
-
-      else
-        --diag(5, entity_desc(entity) .. " is a character that is " ..
-        --        "not associated with any player.");
-      end;
+  for unit_number, entity in pairs(unit_number_to_equipped_entity) do
+    if (not entity.valid) then
+      -- I'm supposed to be listening to events to ensure this does not
+      -- happen.
+      report_bug("Found invalid unit " .. unit_number .. " in the table!");
+      unit_number_to_equipped_entity[unit_number] = nil;
 
     else
-      report_bug(entity_desc(entity) .. " is neither a car nor " ..
-                 "a character; how did it get into my table?");
+      if (diagnostic_verbosity >= 5) then
+        diag(5, "Considering entity " .. entity_desc(entity));
+      end;
 
+      if (entity.type == "car") then
+        -- As an optimization, only do things with a moving vehicle.
+        if (entity.speed == 0) then
+          if (diagnostic_verbosity >= 5) then
+            diag(5, entity_desc(entity) .. " is not moving.");
+          end;
+
+        else
+          local prefs = entity_powered_enabled_bulldozer_prefs(entity);
+          if (prefs) then
+            vehicle_action(entity, prefs);
+          end;
+
+        end;
+
+      elseif (entity.type == "character") then
+        if (entity.player) then
+          local prefs = entity_powered_enabled_bulldozer_prefs(entity);
+          if (prefs) then
+            player_action(entity.player, prefs);
+          end;
+
+        else
+          if (diagnostic_verbosity >= 5) then
+            diag(5, entity_desc(entity) .. " is a character that is " ..
+                    "not associated with any player.");
+          end;
+
+        end;
+
+      else
+        report_bug(entity_desc(entity) .. " is neither a car nor " ..
+                   "a character; how did it get into my table?");
+
+      end;
     end;
   end;
 end;
@@ -817,6 +853,129 @@ end;
 
 local function on_runtime_mod_setting_changed(event)
   read_configuration_settings();
+end;
+
+
+-- ------------------------- Entity lifecycle --------------------------
+-- Filter for entity lifecycle events.
+local entity_event_filter = {
+  {
+    filter = "type",
+    type = "character",
+  },
+  {
+    filter = "type",
+    type = "car",
+    mode = "or",
+  },
+};
+
+
+-- Called when an entity is built, either by the player or a robot.
+local function on_player_or_robot_built_entity(event)
+  local entity = event.entity;
+
+  diag(4, entity_desc(entity) .. " built.");
+
+  possibly_record_equipped_entity(entity);
+end;
+
+script.on_event(
+  defines.events.on_built_entity,
+  on_player_or_robot_built_entity,
+  entity_event_filter);
+
+script.on_event(
+  defines.events.on_robot_built_entity,
+  on_player_or_robot_built_entity,
+  entity_event_filter);
+
+
+-- Called when an entity is mined (picked up) by a player or robot.
+local function on_player_or_robot_mined_entity(event)
+  local entity = event.entity;
+
+  diag(4, entity_desc(entity) .. " mined.");
+
+  if (entity.unit_number) then
+    unit_number_to_equipped_entity[entity.unit_number] = nil;
+  else
+    report_bug("Saw an entity die with no unit number.");
+  end;
+end;
+
+script.on_event(
+  defines.events.on_player_mined_entity,
+  on_player_or_robot_mined_entity,
+  entity_event_filter);
+
+script.on_event(
+  defines.events.on_robot_mined_entity,
+  on_player_or_robot_mined_entity,
+  entity_event_filter);
+
+
+-- Called when an entity dies.
+local function on_entity_died(event)
+  local entity = event.entity;
+
+  diag(4, entity_desc(entity) .. " died.");
+
+  if (entity.unit_number) then
+    unit_number_to_equipped_entity[entity.unit_number] = nil;
+  else
+    -- This happened during development when I typo'd the name of the
+    -- event filter table, thus disabling it.  Hopefully that is now
+    -- fixed and this will not happen.
+    report_bug("Saw an entity die with no unit number.");
+  end;
+end;
+
+script.on_event(
+  defines.events.on_entity_died,
+  on_entity_died,
+  entity_event_filter);
+
+
+-- Map from a numeric player-change event name to its string name.
+local player_event_name_string = {
+  [defines.events.on_player_created                ] = "created"      ,
+  [defines.events.on_player_died                   ] = "died"         ,
+  [defines.events.on_player_joined_game            ] = "joined game"  ,
+  [defines.events.on_player_left_game              ] = "left game"    ,
+  [defines.events.on_player_removed                ] = "removed"      ,
+  [defines.events.on_player_respawned              ] = "respawned"    ,
+
+  -- Called when the player's armor changes.  I think the word
+  -- "inventory" refers to the fact that the slot where the armor goes
+  -- is considered to be an inventory slot.
+  [defines.events.on_player_armor_inventory_changed] = "changed armor",
+};
+
+-- Called when a player is added to or removed from the game.
+local function on_player_changed(event)
+  local player_index = event.player_index;
+
+  local event_name_string = player_event_name_string[event.name];
+  if (not event_name_string) then
+    event_name_string = "(unknown event " .. event.name .. ")";
+  end;
+
+  diag(4, "Player " .. player_index .. " " .. event_name_string);
+
+  local player = game.get_player(player_index);
+  local character = player.character;
+
+  -- I doubt I need to check validity here, but just in case...
+  if (character and character.valid) then
+    diag(4, "Player character is " .. entity_desc(character) .. ".");
+
+    refresh_whether_entity_is_equipped(character);
+  end;
+end;
+
+for event_id, _ in pairs(player_event_name_string) do
+  script.on_event(event_id, on_player_changed);
 end;
 
 

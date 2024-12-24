@@ -191,7 +191,7 @@ Walk near some trees.
 Check that no trees are marked for destruction.
 
 
-eEquipping unpowered BE
+Equipping unpowered BE
 ----------------------
 
 Load a game that has:
@@ -540,6 +540,128 @@ Before all items are converted, uncheck "trash unrequested".
 
 Check that all remaining items are converted to landfill, with the
 newly converted items going into the main inventory.
+
+
+Character lifecycle
+===================
+
+
+Die with BE equipped
+--------------------
+
+Load a save that has:
+
+* BE and a power source equipped in the player's grid.
+
+Get killed by biters.
+
+Check that the character can respawn.
+
+Without any armor equipped, retrieve the character corpse, such that
+the corpse armor becomes equipped.
+
+Walk toward some trees.
+
+Check that the trees get marked.
+
+
+Swap armor
+----------
+
+Load a save that has:
+
+* One set of armor equipped with BE and power.
+* Another set of armor in the inventory with no BE or power.
+
+Walk toward some trees, check they get marked.
+
+Swap in the armor without BE.
+
+Walk toward some trees, check they do not get marked.
+
+Swap back to the first armor.
+
+Walk toward some trees, check they get marked.
+
+
+Join and leave multiplayer
+--------------------------
+
+On one computer, load a save that has:
+
+* A remote player with BE and power in the grid.
+
+On another computer, join that game as that player.
+
+Walk toward trees, check they get marked.
+
+Leave the game.
+
+Rejoin the game.
+
+Walk toward trees, check they get marked.
+
+Unequip BE.
+
+Walk toward trees, check they are not marked.
+
+Leave and rejoin.
+
+Walk toward trees, check they are not marked.
+
+
+Vehicle lifecycle
+=================
+
+
+Place a vehicle with BE
+-----------------------
+
+Load a save that has:
+
+* BE and a power source in the equipment grid of a vehicle that has
+  been picked up (so it is an item, not an entity).
+* No other BE equipped in a vehicle or character.
+
+My save: bulldozer_test_place_be_tank
+
+Place the vehicle down.
+
+Drive toward some trees.
+
+Check that the trees get marked.
+
+Pick up the vehicle.
+
+Walk toward some trees and check they are not marked.
+
+Place the vehicle down again.
+
+Drive toward trees and check they are marked.
+
+
+Vehicle with BE destroyed
+-------------------------
+
+Load a save that has:
+
+* BE equipped in a vehicle grid with power, vehicle placed on the ground.
+* Another vehicle with no equipment in the player's inventory.
+* BE, power source, and fuel in player's inventory.
+
+My save: bulldozer_test_destroy_be_tank
+
+Destroy the vehicle with gunfire.
+
+Check that the game does not crash.
+
+Place the new vehicle.
+
+Put BE, power source, and fuel into it.
+
+Drive toward some trees.
+
+Check that the trees are marked.
 
 
 Performance
