@@ -818,118 +818,6 @@ local function on_shortcut_pressed(event)
 end;
 
 
--- --------------------------- Configuration ---------------------------
--- Return a table containing the preferences for `player_index`.
-get_player_index_prefs = function(player_index)
-  local ret = player_index_to_prefs[player_index];
-  if (ret) then
-    return ret;
-  end;
-
-  -- Must re-read from the API.  The docs imply this cannot return nil.
-  local player_settings = settings.get_player_settings(player_index);
-  ret = {
-    enabled                  = player_settings["bulldozer-equipment-enable-for-player"].value,
-    obstacle_entity_radius   = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
-    obstacle_tile_radius     = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
-    want_remove_trees        = player_settings["bulldozer-equipment-want-remove-trees"].value,
-    want_remove_rocks        = player_settings["bulldozer-equipment-want-remove-rocks"].value,
-    want_remove_cliffs       = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
-    want_remove_water        = player_settings["bulldozer-equipment-want-remove-water"].value,
-    want_landfill_from_wood  = player_settings["bulldozer-equipment-want-landfill-from-wood"].value,
-    want_landfill_from_coal  = player_settings["bulldozer-equipment-want-landfill-from-coal"].value,
-    want_landfill_from_stone = player_settings["bulldozer-equipment-want-landfill-from-stone"].value,
-  };
-  diag(4, "Player " .. player_index ..
-          " has settings: " .. serpent.line(ret));
-
-  player_index_to_prefs[player_index] = ret;
-  return ret;
-end;
-
-
--- Re-read the configuration settings.
---
--- Below, this is done once on startup, then afterward in response to
--- the on_runtime_mod_setting_changed event.
---
-local function read_configuration_settings()
-  -- Note: Because the diagnostic verbosity is changed here, it is
-  -- possible to see unpaired "begin" or "end" in the log.
-  diag(4, "read_configuration_settings begin");
-
-  -- Clear any existing tick handlers.
-  script.on_nth_tick(nil);
-
-  -- Update global preferences.
-  call_error_on_bug              = settings.global["bulldozer-equipment-call-error-on-bug"].value;
-  diagnostic_verbosity           = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
-  obstacle_check_period_ticks    = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
-  landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;
-
-  -- Re-establish the tick handlers with the new periods.
-  if (obstacle_check_period_ticks == landfill_creation_period_ticks) then
-    possibly_register_nth_tick_handler(obstacle_check_period_ticks,
-      "both",
-      function(e)
-        on_obstacle_check_tick(e);
-        on_landfill_creation_tick(e);
-      end);
-
-  else
-    possibly_register_nth_tick_handler(obstacle_check_period_ticks,
-      "obstacle check",
-      on_obstacle_check_tick);
-
-    possibly_register_nth_tick_handler(landfill_creation_period_ticks,
-      "landfill creation",
-      on_landfill_creation_tick);
-
-  end;
-
-  -- Force per-player settings to be refreshed on demand.
-  player_index_to_prefs = {};
-
-  diag(4, "read_configuration_settings end");
-end;
-
-
-local function on_runtime_mod_setting_changed(event)
-  diag(4, "runtime_mod_setting_changed:" ..
-          " setting=" .. event.setting ..
-          " setting_type=" .. event.setting_type ..
-          " player_index=" .. tostring(event.player_index));
-
-  read_configuration_settings();
-
-  if (event.setting == "bulldozer-equipment-enable-for-player") then
-    -- Update shortcut button state.
-    set_one_player_shortcut_button_state(game.get_player(event.player_index));
-  end;
-end;
-
-
--- Called when the game has been update, mods added, etc.
-local function on_configuration_changed(event)
-  diag(4, "on_configuration_changed: " .. serpent.block(event));
-
-  -- I don't have anything to do here, but I want to log the event for
-  -- my own edification.
-end;
-
-
--- Called when this mod is added to a save.
-local function on_init()
-  diag(4, "on_init");
-
-  -- This is how we get the shortcut button to start in the "toggled"
-  -- (pressed) state.  The button state is then persisted in the save
-  -- file, so nothing more needs to be done when loading a save where
-  -- the mod was already present.
-  set_all_players_shortcut_button_state();
-end;
-
-
 -- ------------------------- Entity lifecycle --------------------------
 -- Filter for entity lifecycle events.
 local entity_event_filter = {
@@ -1050,6 +938,118 @@ end;
 
 for event_id, _ in pairs(player_event_name_string) do
   script.on_event(event_id, on_player_changed);
+end;
+
+
+-- --------------------------- Configuration ---------------------------
+-- Return a table containing the preferences for `player_index`.
+get_player_index_prefs = function(player_index)
+  local ret = player_index_to_prefs[player_index];
+  if (ret) then
+    return ret;
+  end;
+
+  -- Must re-read from the API.  The docs imply this cannot return nil.
+  local player_settings = settings.get_player_settings(player_index);
+  ret = {
+    enabled                  = player_settings["bulldozer-equipment-enable-for-player"].value,
+    obstacle_entity_radius   = player_settings["bulldozer-equipment-obstacle-entity-radius"].value,
+    obstacle_tile_radius     = player_settings["bulldozer-equipment-obstacle-tile-radius"].value,
+    want_remove_trees        = player_settings["bulldozer-equipment-want-remove-trees"].value,
+    want_remove_rocks        = player_settings["bulldozer-equipment-want-remove-rocks"].value,
+    want_remove_cliffs       = player_settings["bulldozer-equipment-want-remove-cliffs"].value,
+    want_remove_water        = player_settings["bulldozer-equipment-want-remove-water"].value,
+    want_landfill_from_wood  = player_settings["bulldozer-equipment-want-landfill-from-wood"].value,
+    want_landfill_from_coal  = player_settings["bulldozer-equipment-want-landfill-from-coal"].value,
+    want_landfill_from_stone = player_settings["bulldozer-equipment-want-landfill-from-stone"].value,
+  };
+  diag(4, "Player " .. player_index ..
+          " has settings: " .. serpent.line(ret));
+
+  player_index_to_prefs[player_index] = ret;
+  return ret;
+end;
+
+
+-- Re-read the configuration settings.
+--
+-- Below, this is done once on startup, then afterward in response to
+-- the on_runtime_mod_setting_changed event.
+--
+local function read_configuration_settings()
+  -- Note: Because the diagnostic verbosity is changed here, it is
+  -- possible to see unpaired "begin" or "end" in the log.
+  diag(4, "read_configuration_settings begin");
+
+  -- Clear any existing tick handlers.
+  script.on_nth_tick(nil);
+
+  -- Update global preferences.
+  call_error_on_bug              = settings.global["bulldozer-equipment-call-error-on-bug"].value;
+  diagnostic_verbosity           = settings.global["bulldozer-equipment-diagnostic-verbosity"].value;
+  obstacle_check_period_ticks    = settings.global["bulldozer-equipment-obstacle-check-period-ticks"].value;
+  landfill_creation_period_ticks = settings.global["bulldozer-equipment-landfill-creation-period-ticks"].value;
+
+  -- Re-establish the tick handlers with the new periods.
+  if (obstacle_check_period_ticks == landfill_creation_period_ticks) then
+    possibly_register_nth_tick_handler(obstacle_check_period_ticks,
+      "both",
+      function(e)
+        on_obstacle_check_tick(e);
+        on_landfill_creation_tick(e);
+      end);
+
+  else
+    possibly_register_nth_tick_handler(obstacle_check_period_ticks,
+      "obstacle check",
+      on_obstacle_check_tick);
+
+    possibly_register_nth_tick_handler(landfill_creation_period_ticks,
+      "landfill creation",
+      on_landfill_creation_tick);
+
+  end;
+
+  -- Force per-player settings to be refreshed on demand.
+  player_index_to_prefs = {};
+
+  diag(4, "read_configuration_settings end");
+end;
+
+
+local function on_runtime_mod_setting_changed(event)
+  diag(4, "runtime_mod_setting_changed:" ..
+          " setting=" .. event.setting ..
+          " setting_type=" .. event.setting_type ..
+          " player_index=" .. tostring(event.player_index));
+
+  read_configuration_settings();
+
+  if (event.setting == "bulldozer-equipment-enable-for-player") then
+    -- Update shortcut button state.
+    set_one_player_shortcut_button_state(game.get_player(event.player_index));
+  end;
+end;
+
+
+-- Called when the game has been update, mods added, etc.
+local function on_configuration_changed(event)
+  diag(4, "on_configuration_changed: " .. serpent.block(event));
+
+  -- I don't have anything to do here, but I want to log the event for
+  -- my own edification.
+end;
+
+
+-- Called when this mod is added to a save.
+local function on_init()
+  diag(4, "on_init");
+
+  -- This is how we get the shortcut button to start in the "toggled"
+  -- (pressed) state.  The button state is then persisted in the save
+  -- file, so nothing more needs to be done when loading a save where
+  -- the mod was already present.
+  set_all_players_shortcut_button_state();
 end;
 
 
