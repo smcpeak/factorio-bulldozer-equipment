@@ -282,8 +282,18 @@ end;
 
 
 -- Refresh the table of entities if we just started running.
+--
+-- This should be called early in any event handler, since the order of
+-- events is not determined, and can vary based on installed mods.
+--
+-- In particular, if a game is saved with multiple players present, then
+-- loaded with just one player (can it be loaded with multiple?), we get
+-- a set of `on_player_changed` events to synchronize the player list
+-- before any tick handler runs.
+--
 local function maybe_initialize_unit_number_to_equipped_entity()
   if (not unit_number_to_equipped_entity) then
+    diag(5, "maybe_initialize_unit_number_to_equipped_entity: refreshing");
     refresh_unit_number_to_equipped_entity();
   end;
 end;
@@ -771,6 +781,8 @@ end;
 
 -- Called for the landfill creation tick handler.
 local function on_landfill_creation_tick(event)
+  maybe_initialize_unit_number_to_equipped_entity();
+
   all_equipped_entities_create_landfill();
 end;
 
@@ -818,6 +830,8 @@ local function on_shortcut_pressed(event)
   if (event.prototype_name == "bulldozer-equipment") then
     diag(4, "on_shortcut_pressed: " .. serpent.block(event));
 
+    maybe_initialize_unit_number_to_equipped_entity();
+
     toggle_bulldozer_for_player(event.player_index);
   end;
 end;
@@ -826,6 +840,8 @@ end;
 -- Called when the bulldozer custom input key is pressed.
 local function on_custom_input(event)
   diag(4, "on_custom_input: " .. serpent.block(event));
+
+  maybe_initialize_unit_number_to_equipped_entity();
 
   toggle_bulldozer_for_player(event.player_index);
 end;
@@ -852,6 +868,8 @@ local function on_player_or_robot_built_entity(event)
 
   diag(4, entity_desc(entity) .. " built.");
 
+  maybe_initialize_unit_number_to_equipped_entity();
+
   possibly_record_equipped_entity(entity);
 end;
 
@@ -871,6 +889,8 @@ local function on_player_or_robot_mined_entity(event)
   local entity = event.entity;
 
   diag(4, entity_desc(entity) .. " mined.");
+
+  maybe_initialize_unit_number_to_equipped_entity();
 
   if (entity.unit_number) then
     unit_number_to_equipped_entity[entity.unit_number] = nil;
@@ -895,6 +915,8 @@ local function on_entity_died(event)
   local entity = event.entity;
 
   diag(4, entity_desc(entity) .. " died.");
+
+  maybe_initialize_unit_number_to_equipped_entity();
 
   if (entity.unit_number) then
     unit_number_to_equipped_entity[entity.unit_number] = nil;
@@ -937,6 +959,8 @@ local function on_player_changed(event)
   end;
 
   diag(4, "Player " .. player_index .. " " .. event_name_string);
+
+  maybe_initialize_unit_number_to_equipped_entity();
 
   local player = game.get_player(player_index);
   local character = player.character;
@@ -1039,6 +1063,8 @@ local function on_runtime_mod_setting_changed(event)
   read_configuration_settings();
 
   if (event.setting == "bulldozer-equipment-enable-for-player") then
+    maybe_initialize_unit_number_to_equipped_entity();
+
     -- Update shortcut button state.
     set_one_player_shortcut_button_state(game.get_player(event.player_index));
   end;

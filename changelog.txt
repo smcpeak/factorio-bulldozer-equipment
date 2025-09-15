@@ -3,3 +3,9 @@ Version: 1.0.0
 Date: 2024-12-21
   Features:
     - Automatically order deconstruction of nearby natural obstacles.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 2025-09-15
+  Fixes:
+    - Issue #1: Crash when loading a multiplayer save due to nil `unit_number_to_equipped_entity` map.

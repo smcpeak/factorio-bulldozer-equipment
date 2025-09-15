@@ -679,6 +679,16 @@ Leave and rejoin.
 Walk toward trees, check they are not marked.
 
 
+Load a multiplayer save
+-----------------------
+
+With two players in game, save the game.
+
+Quit the game.
+
+Load the multiplayer save as a solo game.  Check that nothing crashes.
+
+
 Vehicle lifecycle
 =================
 
