@@ -755,18 +755,10 @@ end;
 
 -- Possibly create landfill for one vehicle.
 local function vehicle_create_landfill(vehicle, prefs)
-  -- Note: There is no inventory define for `car_trash`, but it appears
-  -- that the tank at least follows the same pattern of values as the
-  -- spider, so we can use `spider_trash` (which has value 4) to get the
-  -- tank trash inventory.
-  --
-  -- Submitted a feature request to add `car_trash`:
-  -- https://forums.factorio.com/viewtopic.php?f=6&t=124950
-  --
   entity_create_landfill(vehicle,
     prefs,
     defines.inventory.car_trunk,
-    defines.inventory.spider_trash);
+    defines.inventory.car_trash);
 end;
 
 
