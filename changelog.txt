@@ -9,3 +9,9 @@ Version: 1.0.1
 Date: 2025-09-15
   Fixes:
     - Issue #1: Crash when loading a multiplayer save due to nil `unit_number_to_equipped_entity` map.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 2025-11-28
+  Fixes:
+    - Starting a new game with the mod enabled did not set the shortcut button state properly.

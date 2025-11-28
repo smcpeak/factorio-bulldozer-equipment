@@ -206,7 +206,7 @@ end;
 
 -- If `entity` has the bulldozer equipment, return it as a LuaEquipment,
 -- ignoring whether it has sufficient power to operate.  Otherwise
--- return nil and log the reason..
+-- return nil and log the reason.
 local function get_equipped_bulldozer(entity)
   local equipment_grid = entity.grid;
   if (equipment_grid == nil) then
@@ -962,6 +962,13 @@ local function on_player_changed(event)
     diag(4, "Player character is " .. entity_desc(character) .. ".");
 
     refresh_whether_entity_is_equipped(character);
+  end;
+
+  -- When a player joins, set the shotcut button state to match their
+  -- preferences.  This happens, among other times, when a new game is
+  -- started, after `on_init`.
+  if (event.name == defines.events.on_player_joined_game) then
+    set_one_player_shortcut_button_state(player)
   end;
 end;
 

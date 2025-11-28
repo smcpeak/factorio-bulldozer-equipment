@@ -29,6 +29,10 @@ set to true.
 Adding the mod
 ==============
 
+
+Add the mod to an existing game
+-------------------------------
+
 Load a game that was saved without BE installed.
 
 My save: infinity_items
@@ -45,6 +49,22 @@ Open Factoriopedia by Alt-clicking anything.  Go to the Combat tab.
 
 Check BE appears as a "Recipe/Item" and has a properly mapped name and
 description.
+
+
+Start a new game with the mod
+-----------------------------
+
+Start a new freeplay game with the mod installed.
+
+Check that the bulldozer shortcut button is initially depressed
+(yellow).
+
+Check that bulldozer is enabled for the player in the settings menu.
+
+Press the shortcut button.  Check that its state changes to not
+depressed (gray).
+
+Check that bulldozer is disabled for the player in the settings menu.
 
 
 Research
