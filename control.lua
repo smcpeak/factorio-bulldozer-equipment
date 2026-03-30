@@ -204,13 +204,26 @@ local function entity_bulldozer_prefs(entity)
 end;
 
 
--- If `entity` has the bulldozer equipment, return it as a LuaEquipment,
--- ignoring whether it has sufficient power to operate.  Otherwise
--- return nil and log the reason.
+-- True if `entity` is a type of entity that is eligible for bulldozer
+-- equipment effects.
+local function is_eligible_entity_type(entity)
+  return (entity.type == "car" or
+          entity.type == "character");
+end;
+
+
+-- If `entity` has the bulldozer equipment and is eligible to use it,
+-- return it as a LuaEquipment, ignoring whether it has sufficient power
+-- to operate.  Otherwise return nil and log the reason.
 local function get_equipped_bulldozer(entity)
   local equipment_grid = entity.grid;
   if (equipment_grid == nil) then
     diag(5, entity_desc(entity) .. " has no equipment grid.");
+    return nil;
+  end;
+
+  if (not is_eligible_entity_type(entity)) then
+    diag(5, entity_desc(entity) .. " is not an eligible type.");
     return nil;
   end;
 
@@ -253,8 +266,8 @@ local function entity_powered_enabled_bulldozer_prefs(entity)
 end;
 
 
--- If `entity` has the bulldozer equipment, add it to
--- `unit_number_to_equipped_entity`.
+-- If `entity` has the bulldozer equipment and is eligible to use it,
+-- add it to `unit_number_to_equipped_entity`.
 local function possibly_record_equipped_entity(entity)
   if (get_equipped_bulldozer(entity)) then
     diag(4, entity_desc(entity) .. " has the bulldozer equipped.");
@@ -347,8 +360,8 @@ local function on_equipment_inserted_or_removed(event)
     diag(3, "Bulldozer equipment " .. change_desc ..
             " for " .. entity_desc(entity) .. ".");
 
-    if (entity.type ~= "car" and entity.type ~= "character") then
-      diag(3, "But it is neither a car nor a character.");
+    if (not is_eligible_entity_type(entity)) then
+      diag(3, "But it is not an eligible entity type.");
       return;
     end;
 
