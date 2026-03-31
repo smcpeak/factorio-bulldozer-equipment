@@ -390,7 +390,7 @@ Vehicle equipment grid
 
 For these tests, load a game that has:
 
-* BE researched.
+* BE researched and enabled in settings.
 * Cliff Explosives researched.
 * A BE item in the player's inventory but not in the grid.
 * A portable fission generator in the player's inventory.
@@ -442,6 +442,18 @@ Remove BE from the tank's grid.
 Drive it near some trees.
 
 Check that no trees are marked for destruction.
+
+
+Repeat with Spidertron
+----------------------
+
+Repeat the above tests, starting with placing the vehicle, using a
+Spidertron instead of a tank.  Disregard the vehicle fuel instructions,
+as Spidertrons do not need fuel.  Do the test once when driving the
+Spidertron by getting into it, and once when using a Spidertron remote
+to control it.
+
+My save: bulldozer_test_spider_in_inv
 
 
 Player landfill creation
@@ -572,7 +584,7 @@ No BE
 
 Load a game that has:
 
-* BE researched.
+* BE researched and enabled.
 * Logistic system researched (requester chests, etc.).
 * A fueled tank on the ground.
 * BE item in player's inventory.
@@ -594,7 +606,7 @@ Add BE
 
 Continue the previous test.
 
-Put BE into the tank's inventory.
+Put BE into the tank's equipment grid.
 
 Check that no conversion is happening (the tank is not moving).
 
@@ -612,7 +624,7 @@ Continue the previous test.
 Before all items are converted, check the "trash unrequested" box so
 most of it moves to the tank's trash inventory.
 
-Drive forward and check that remaining items are begin converted to
+Drive forward and check that remaining items start being converted to
 landfill that is placed in the tank's trash inventory.
 
 Before all items are converted, uncheck "trash unrequested".
@@ -623,6 +635,28 @@ newly converted items going into the main inventory.
 Click the shortcut button to disable the mod.
 
 Drive forward and check that no conversion happens.
+
+
+Pick up the vehicle
+-------------------
+
+Right-click and hold to mine the tank while BE and the power source is
+still in its equipment vehicle.
+
+Check that the game does not crash.
+
+
+Repeat with Spidertron
+----------------------
+
+Repeat the above tests, starting with adding BE to the grid, using a
+Spidertron instead of a tank.  Again, ignore instructions related to
+vehicle fuel.
+
+Do the tests once through when driving the Spidertron directly.  Then
+repeat the "Add BE" test when driving it with a remote.
+
+My save: bulldozer_test_spider_1k_wood_etc
 
 
 Character lifecycle
@@ -762,6 +796,16 @@ Put BE, power source, and fuel into it.
 Drive toward some trees.
 
 Check that the trees are marked.
+
+
+Repeat with Spidertron
+----------------------
+
+Repeat the above tests, starting with placing the vehicle, using a
+Spidertron instead of a tank.  Drive it directly (rather than via a
+remote).
+
+My save: bulldozer_test_place_be_spider
 
 
 Performance

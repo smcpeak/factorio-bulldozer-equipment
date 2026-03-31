@@ -70,7 +70,7 @@ local player_index_to_last_move_tick = {};
 
 -- Map from unit number to a LuaEntity whose equipment grid contains the
 -- bulldozer equipment installed.  This is nil until we do an initial
--- scan.  All entities are either cars or characters.
+-- scan.  All entities are either car, spidertrons, or characters.
 --
 -- TODO: Allow other kinds of vehicles too?  A concern is the
 -- applicability of the optimization that checks the speed.
@@ -139,10 +139,19 @@ local function entity_desc(entity)
 end;
 
 
--- Get the player index associated with entity 'e', or -1 if this
+-- True if `entity` is a type of vehicle entity that is eligible for
+-- bulldozer equipment effects.  Vehicles have `speed` and `last_user`
+-- attributes.
+local function is_eligible_vehicle_type(entity)
+  return (entity.type == "car" or
+          entity.type == "spider-vehicle");
+end;
+
+
+-- Get the player index associated with entity `e`, or -1 if this
 -- entity is not associated with a player.
 local function player_index_of_entity(e)
-  if (e.type == 'car') then
+  if (is_eligible_vehicle_type(e)) then
     -- Vehicle.
     --
     -- Normally vehicles always have a last_user, but with mods it is
@@ -153,7 +162,7 @@ local function player_index_of_entity(e)
     else
       return e.last_user.index;
     end;
-  elseif (e.type == 'character') then
+  elseif (e.type == "character") then
     -- Character.
     if (e.player ~= nil) then
       return e.player.index;
@@ -207,7 +216,7 @@ end;
 -- True if `entity` is a type of entity that is eligible for bulldozer
 -- equipment effects.
 local function is_eligible_entity_type(entity)
-  return (entity.type == "car" or
+  return (is_eligible_vehicle_type(entity) or
           entity.type == "character");
 end;
 
@@ -559,7 +568,7 @@ local function for_all_powered_enabled_equipped_entities(
         diag(5, "Considering entity " .. entity_desc(entity));
       end;
 
-      if (entity.type == "car") then
+      if (is_eligible_vehicle_type(entity)) then
         -- As an optimization, only do things with a moving vehicle.
         if (entity.speed == 0) then
           if (diagnostic_verbosity >= 5) then
@@ -590,7 +599,7 @@ local function for_all_powered_enabled_equipped_entities(
         end;
 
       else
-        report_bug(entity_desc(entity) .. " is neither a car nor " ..
+        report_bug(entity_desc(entity) .. " is neither an eligible vehicle nor " ..
                    "a character; how did it get into my table?");
 
       end;
@@ -768,10 +777,23 @@ end;
 
 -- Possibly create landfill for one vehicle.
 local function vehicle_create_landfill(vehicle, prefs)
-  entity_create_landfill(vehicle,
-    prefs,
-    defines.inventory.car_trunk,
-    defines.inventory.car_trash);
+  if (vehicle.type == "car") then
+    entity_create_landfill(vehicle,
+      prefs,
+      defines.inventory.car_trunk,
+      defines.inventory.car_trash);
+
+  elseif (vehicle.type == "spider-vehicle") then
+    entity_create_landfill(vehicle,
+      prefs,
+      defines.inventory.spider_trunk,
+      defines.inventory.spider_trash);
+
+  else
+    report_bug(entity_desc(entity) .. ": Unrecognized vehicle type: " ..
+               vehicle.type);
+
+  end;
 end;
 
 
@@ -862,6 +884,11 @@ local entity_event_filter = {
   {
     filter = "type",
     type = "car",
+    mode = "or",
+  },
+  {
+    filter = "type",
+    type = "spider-vehicle",
     mode = "or",
   },
 };
