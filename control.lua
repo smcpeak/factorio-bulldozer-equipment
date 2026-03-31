@@ -70,10 +70,12 @@ local player_index_to_last_move_tick = {};
 
 -- Map from unit number to a LuaEntity whose equipment grid contains the
 -- bulldozer equipment installed.  This is nil until we do an initial
--- scan.  All entities are either car, spidertrons, or characters.
+-- scan.
 --
--- TODO: Allow other kinds of vehicles too?  A concern is the
--- applicability of the optimization that checks the speed.
+-- Every tracked entity is either a car, spidertron, train cargo wagon,
+-- or character.  Allowing support for a new entity type requires
+-- knowing how to get its regular and trash (if applicable) inventory,
+-- and how to check its speed.
 --
 local unit_number_to_equipped_entity = nil;
 
@@ -128,10 +130,11 @@ local function entity_desc(entity)
   -- Since this is used as part of the diagnostics, be extra defensive
   -- here so I don't lose info about unexpected circumstances.
   if (entity.valid) then
+    name_and_type = entity.name .. " (type " .. entity.type .. ") ";
     if (entity.unit_number) then
-      return entity.name .. " " .. entity.unit_number;
+      return name_and_type .. entity.unit_number;
     else
-      return entity.name .. " with no unit number";
+      return name_and_type .. "with no unit number";
     end;
   else
     return "<invalid entity>";
@@ -141,10 +144,11 @@ end;
 
 -- True if `entity` is a type of vehicle entity that is eligible for
 -- bulldozer equipment effects.  Vehicles have `speed` and `last_user`
--- attributes.
+-- attributes (among others).
 local function is_eligible_vehicle_type(entity)
   return (entity.type == "car" or
-          entity.type == "spider-vehicle");
+          entity.type == "spider-vehicle" or
+          entity.type == "cargo-wagon");
 end;
 
 
@@ -732,7 +736,7 @@ local function entity_create_landfill(
   entity,
   prefs,
   main_inv_id,
-  trash_inv_id
+  trash_inv_id          -- This is negative if the entity has no trash.
 )
   if (not want_some_landfill(prefs)) then
     diag(5, entity_desc(entity) .. " has landfill creation disabled.");
@@ -745,15 +749,17 @@ local function entity_create_landfill(
     return;
   end;
 
-  -- Try converting from trash first.
-  local trash_inv = entity.get_inventory(trash_inv_id);
-  if (not trash_inv) then
-    diag(4, entity_desc(entity) .. " does not have a trash inventory.");
-  else
-    local situation =
-      entity_desc(entity) .. " creating landfill from trash inventory";
-    if (create_landfill(situation, trash_inv, main_inv, prefs)) then
-      return;
+  -- Try converting from trash first (if applicable).
+  if (trash_inv_id >= 0) then
+    local trash_inv = entity.get_inventory(trash_inv_id);
+    if (not trash_inv) then
+      diag(4, entity_desc(entity) .. " does not have a trash inventory.");
+    else
+      local situation =
+        entity_desc(entity) .. " creating landfill from trash inventory";
+      if (create_landfill(situation, trash_inv, main_inv, prefs)) then
+        return;
+      end;
     end;
   end;
 
@@ -788,6 +794,12 @@ local function vehicle_create_landfill(vehicle, prefs)
       prefs,
       defines.inventory.spider_trunk,
       defines.inventory.spider_trash);
+
+  elseif (vehicle.type == "cargo-wagon") then
+    entity_create_landfill(vehicle,
+      prefs,
+      defines.inventory.cargo_wagon,
+      -1);         -- Cargo wagons cannot have a trash inventory.
 
   else
     report_bug(entity_desc(entity) .. ": Unrecognized vehicle type: " ..
@@ -889,6 +901,11 @@ local entity_event_filter = {
   {
     filter = "type",
     type = "spider-vehicle",
+    mode = "or",
+  },
+  {
+    filter = "type",
+    type = "cargo-wagon",
     mode = "or",
   },
 };

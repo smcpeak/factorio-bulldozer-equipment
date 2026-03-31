@@ -456,6 +456,20 @@ to control it.
 My save: bulldozer_test_spider_in_inv
 
 
+Repeat with Construction Train
+------------------------------
+
+Repeat the above tests using the
+[Construction Train By werl](https://mods.factorio.com/mod/construction-train-werl)
+mod.  Prior to placement, in the player's inventory, instead of a tank
+and fuel, have a cargo wagon.
+
+Prepare in advance a short rail line that heads towards some trees, and
+put a fueled locomotive and a cargo wagon onto the rail.
+
+My save: bulldozer_test_wagon_in_inv
+
+
 Player landfill creation
 ========================
 
@@ -659,6 +673,19 @@ repeat the "Add BE" test when driving it with a remote.
 My save: bulldozer_test_spider_1k_wood_etc
 
 
+Repeat with Construction Wagon
+------------------------------
+
+Repeat the tests using the construction wagon mod.  Omit the step about
+trash conversion since it has no trash inventory.
+
+Do the test first with cargo transfer disabled, then with a it enabled
+and inventory slots allocated to wood, coal, stone, and landfill.
+
+My saves: bulldozer_test_wagon_1k_wood_etc,
+bulldozer_test_wagon_1k_wood_etc_xfer
+
+
 Character lifecycle
 ===================
 
@@ -805,7 +832,17 @@ Repeat the above tests, starting with placing the vehicle, using a
 Spidertron instead of a tank.  Drive it directly (rather than via a
 remote).
 
-My save: bulldozer_test_place_be_spider
+My saves: bulldozer_test_place_be_spider,
+bulldozer_test_destroy_be_spider
+
+
+Repeat with Cargo Wagon
+-----------------------
+
+Repeat the above steps using the cargo wagon.
+
+My save: bulldozer_test_place_be_wagon,
+bulldozer_test_destroy_be_wagon
 
 
 Performance

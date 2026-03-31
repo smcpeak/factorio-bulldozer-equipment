@@ -82,6 +82,29 @@ remove trees, whether to landfill water, and which resources (if any) to
 turn into landfill.
 
 
+Supported vehicle types
+=======================
+
+Currently, this mod supports vehicles of following types (identified by
+their internal API string identifier):
+
+* "car": Tank (including modded tanks like RoboTank), and also the plain
+  scout car if it is modded to have an equipment grid (but that is
+  untested).
+* "spider-vehicle": Spidertron.
+* "cargo-wagon": Train cargo wagons if modded to have an equipment grid,
+  such as [Construction Train By werl](https://mods.factorio.com/mod/construction-train-werl).
+
+Operation with cargo wagons (at least with the indicated mod) is
+somewhat unsatisfactory IMO because the onboard roboport is only enabled
+when the train is completely stationary, so you can't just cruise at low
+speed to clear obstacles and construct rail; you have to constantly stop
+and start to allow the robots to work.
+
+Adding another vehicle type mainly requires knowing how to get its speed
+and how to get its inventory from within the mod API.
+
+
 Balance considerations
 ======================
 
