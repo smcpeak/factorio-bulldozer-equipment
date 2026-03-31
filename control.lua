@@ -1012,6 +1012,12 @@ local function on_player_changed(event)
   maybe_initialize_unit_number_to_equipped_entity();
 
   local player = game.get_player(player_index);
+  if (player == nil) then
+    -- This happens if a player is removed.
+    diag(4, "Player object is nil; skipping refresh, etc.");
+    return;
+  end;
+
   local character = player.character;
 
   -- I doubt I need to check validity here, but just in case...

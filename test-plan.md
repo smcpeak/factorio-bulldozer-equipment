@@ -845,6 +845,16 @@ My save: bulldozer_test_place_be_wagon,
 bulldozer_test_destroy_be_wagon
 
 
+Editor Extensions
+=================
+
+With the [Editor Extensions](https://mods.factorio.com/mod/EditorExtensions)
+mod installed, start a new game using the "Editor Extensions/Testing"
+scenario.
+
+Check that the game does not crash.
+
+
 Performance
 ===========
 

@@ -15,6 +15,7 @@ Version: 1.1.0
 Date: 2025-11-28
   Fixes:
     - Starting a new game with the mod enabled did not set the shortcut button state properly.
+    - Crash when starting the "Editor Extensions/Testing" scenario in the Editor Extensions mod.
   Features:
     - Add support for Spidertrons.
     - Add support for train cargo wagons modded to have equipment grids.
