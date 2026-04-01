@@ -12,7 +12,7 @@ Date: 2025-09-15
 
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
-Date: 2025-11-28
+Date: 2026-03-31
   Fixes:
     - Starting a new game with the mod enabled did not set the shortcut button state properly.
     - Crash when starting the "Editor Extensions/Testing" scenario in the Editor Extensions mod.
