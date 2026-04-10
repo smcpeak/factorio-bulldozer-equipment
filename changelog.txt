@@ -25,3 +25,5 @@ Version: 1.1.1
 Date: 2026-04-10
   Fixes:
     - Bug (optional halt) when "/editor" command used with BE equipped.
+  Changes:
+    - Clarify log diagnostic levels 2 and 3, reassigning a few events.

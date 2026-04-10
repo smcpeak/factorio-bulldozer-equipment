@@ -14,8 +14,10 @@ local call_error_on_bug = false;
 --   0: Nothing.
 --   1: Only things that indicate a serious problem.  These suggest a
 --      bug in this mod, but are recoverable.
---   2: Relatively infrequent things possibly of interest to the user.
---   3: More details, also of potential user interest.
+--   2: User-visible events caused by direct user action, such as
+--      equipping BE.
+--   3: Periodic user-visible events such as marking individual
+--      obstacles.
 --   4: Individual algorithm steps only of interest to a developer.
 --   5: Even more verbose developer details, especially things that
 --      happen periodically regardless of anything else.
@@ -88,7 +90,7 @@ local get_player_index_prefs;
 -- Log 'str' if we are at verbosity 'v' or higher.
 local function diag(v, str)
   if (v <= diagnostic_verbosity) then
-    log(str);
+    log("[" .. v .. "] " .. str);
   end;
 end;
 
@@ -366,15 +368,15 @@ local function on_equipment_inserted_or_removed(event)
       -- and maybe not even then.  Or maybe this could happen if a mod
       -- can reach into the equipment grid of a vehicle that has been
       -- picked up, and is hence an item rather than an entity?
-      diag(3, "Bulldozer " .. change_desc .. " but the entity is nil.");
+      diag(2, "Bulldozer " .. change_desc .. " but the entity is nil.");
       return;
     end;
 
-    diag(3, "Bulldozer equipment " .. change_desc ..
+    diag(2, "Bulldozer equipment " .. change_desc ..
             " for " .. entity_desc(entity) .. ".");
 
     if (not is_eligible_entity_type(entity)) then
-      diag(3, "But it is not an eligible entity type.");
+      diag(2, "But it is not an eligible entity type.");
       return;
     end;
 
@@ -847,7 +849,7 @@ local function set_one_player_shortcut_button_state(player)
   -- Here, "toggled" means "pressed", i.e., enabled.
   player.set_shortcut_toggled(shortcut_name, cur_value);
 
-  diag(3, "Player " .. player.index ..
+  diag(2, "Player " .. player.index ..
           ": Set shortcut button state to " .. tostring(cur_value));
 
 end;
@@ -1016,7 +1018,7 @@ local function on_player_changed(event)
     event_name_string = "(unknown event " .. event.name .. ")";
   end;
 
-  diag(4, "Player " .. player_index .. " " .. event_name_string);
+  diag(2, "Player " .. player_index .. " " .. event_name_string);
 
   maybe_initialize_unit_number_to_equipped_entity();
 
