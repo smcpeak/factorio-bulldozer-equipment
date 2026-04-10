@@ -139,6 +139,16 @@ configured to use a large tile search radius and short period between
 checks, there could be a UPS hit when approaching a shoreline.
 
 
+Known issues
+============
+
+If Bulldozer Equipment is in the player's equipment grid when the Map
+Editor (`/editor` command) is entered and then exited, the equipment
+will not function until it is removed and re-inserted into the
+character's equipment grid.  (This issue only applies to the character,
+not vehicles.)
+
+
 Related mods
 ============
 

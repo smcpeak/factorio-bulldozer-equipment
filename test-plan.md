@@ -855,6 +855,27 @@ scenario.
 Check that the game does not crash.
 
 
+Map Editor
+==========
+
+Load a game that has:
+
+* A BE item in the player's equipment grid.
+* A portable fusion generator in the grid.
+
+My save: bulldozer_test_be_equipped
+
+Walk near some trees.  Check that they are marked for destruction.
+
+Open the Map Editor with `/editor`.  Check that the game does not crash.
+
+Close the Map Editor with `/editor`.  Walk near some trees.  Check that
+they are *not* marked, contrary to nominal expectation.
+
+Remove BE from the equipment grid and re-insert it.  Walk near some
+trees.  Check that they are marked for destruction.
+
+
 Performance
 ===========
 

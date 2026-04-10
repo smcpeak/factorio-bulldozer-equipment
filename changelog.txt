@@ -19,3 +19,9 @@ Date: 2026-03-31
   Features:
     - Add support for Spidertrons.
     - Add support for train cargo wagons modded to have equipment grids.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.1.1
+Date: 2026-04-10
+  Fixes:
+    - Bug (optional halt) when "/editor" command used with BE equipped.

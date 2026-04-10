@@ -562,9 +562,18 @@ local function for_all_powered_enabled_equipped_entities(
 
   for unit_number, entity in pairs(unit_number_to_equipped_entity) do
     if (not entity.valid) then
-      -- I'm supposed to be listening to events to ensure this does not
-      -- happen.
-      report_bug("Found invalid unit " .. unit_number .. " in the table!");
+      -- In normal operation, I'm supposed to be listening to events to
+      -- pre-emptively remove invalid entities so that we do not reach
+      -- this code.  However, when the "/editor" command is used
+      -- (possibly among other circumstances), the character entity
+      -- becomes invalid, but there is not, to my knowledge, an event
+      -- for that.  So, let's just log and recover.
+      --
+      -- Unfortunately, this also means the bulldozer equipped to the
+      -- character won't function when the editor session ends because
+      -- there isn't anything to prompt re-adding it to the table.  So
+      -- the user has to unequip and then re-equip it.
+      diag(2, "Found invalid unit " .. unit_number .. " in the table!  Removing it.");
       unit_number_to_equipped_entity[unit_number] = nil;
 
     else
