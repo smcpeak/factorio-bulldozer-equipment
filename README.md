@@ -152,15 +152,19 @@ not vehicles.)
 Related mods
 ============
 
-Available for Factorio 2.x
+Available for Factorio 2.1
 --------------------------
-
-* [Tree Cleaner](https://mods.factorio.com/mod/TreeCleaner) by
-  GPS: Marks dead trees for deconstruction.
 
 * [King Jo's Bulldozer](https://mods.factorio.com/mod/kj_bulldozer) by
   TheKingJo: A vehicle intended, I think, to simply ram into the trees
   and rocks.
+
+
+Available for Factorio 2.0
+--------------------------
+
+* [Tree Cleaner](https://mods.factorio.com/mod/TreeCleaner) by
+  GPS: Marks dead trees for deconstruction.
 
 
 Only for Factorio 1.x

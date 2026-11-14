@@ -27,3 +27,9 @@ Date: 2026-04-10
     - Bug (optional halt) when "/editor" command used with BE equipped.
   Changes:
     - Clarify log diagnostic levels 2 and 3, reassigning a few events.
+
+---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+Date: 2026-11-13
+  Compatibility:
+    - Update for Factorio 2.1.

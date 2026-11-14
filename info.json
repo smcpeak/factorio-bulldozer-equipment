@@ -1,10 +1,10 @@
 {
   "name": "BulldozerEquipment",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "title": "Bulldozer Equipment",
   "author": "Scott McPeak",
   "homepage": "https://github.com/smcpeak/factorio-bulldozer-equipment",
-  "factorio_version": "2.0",
-  "dependencies": ["base >= 2.0.29"],
+  "factorio_version": "2.1",
+  "dependencies": ["base >= 2.1"],
   "description": "Provides an equipment grid component that automatically orders the removal of nearby natural obstacles: trees, rocks, cliffs, and water.  Also converts collected trash into landfill."
 }
